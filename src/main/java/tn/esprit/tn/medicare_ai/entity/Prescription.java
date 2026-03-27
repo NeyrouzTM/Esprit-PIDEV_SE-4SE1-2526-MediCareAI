@@ -12,31 +12,28 @@ import java.util.List;
 
 @Entity
 @Table(name = "prescriptions")
+@AllArgsConstructor
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class Prescription {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Legacy relation used by existing CRUD module.
     @ManyToOne
     @JoinColumn(name = "medical_record_id", nullable = false)
     private MedicalRecord medicalRecord;
 
-    // New relation used by order/refill workflow.
     @ManyToOne
     @JoinColumn(name = "patient_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_prescription_patient"))
-    private User patient;
+    private User patient;          // role = PATIENT
 
     @ManyToOne
     @JoinColumn(name = "doctor_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_prescription_doctor"))
-    private User doctor;
+    private User doctor;           // role = DOCTOR
 
-    // Legacy single-medication fields.
     @Column(nullable = false)
     private String medicationName;
     private String dosage;
@@ -45,7 +42,6 @@ public class Prescription {
     private LocalDate prescriptionDate;
     private boolean active;
 
-    // New structured prescription fields.
     private LocalDate issueDate;
     private LocalDate expiryDate;
 
