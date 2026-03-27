@@ -1,5 +1,4 @@
 package tn.esprit.tn.medicare_ai.security;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,21 +30,19 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authProvider() {
-        DaoAuthenticationProvider p =
-                new DaoAuthenticationProvider(userDetailsService);
+        DaoAuthenticationProvider p = new DaoAuthenticationProvider(userDetailsService);
         p.setPasswordEncoder(passwordEncoder);
         return p;
     }
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration config) throws Exception {
+            AuthenticationConfiguration config) {
         return config.getAuthenticationManager();
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -53,48 +50,11 @@ public class SecurityConfig {
                         SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authProvider())
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
-                        // Swagger
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs.yaml"
-                        ).permitAll()
-                        // Medical Records
-                        .requestMatchers("/medical-records/**")
-                        .hasAnyRole("PATIENT", "DOCTOR", "ADMIN")
-                        // Prescriptions
-                        .requestMatchers("/prescriptions/**")
-                        .hasAnyRole("DOCTOR", "PATIENT")
-                        // Lab Results
-                        .requestMatchers("/lab-results/**")
-                        .hasAnyRole("DOCTOR", "PATIENT")
-                        // Medical Images
-                        .requestMatchers("/medical-images/**")
-                        .hasAnyRole("DOCTOR", "PATIENT")
-                        // Allergies
-                        .requestMatchers("/allergies/**")
-                        .hasAnyRole("DOCTOR", "PATIENT")
-                        // Visit Notes
-                        .requestMatchers("/visit-notes/**")
-                        .hasAnyRole("DOCTOR", "PATIENT")
-                        // Appointments
-                        .requestMatchers("/appointments/**")
-                        .hasAnyRole("PATIENT", "DOCTOR")
-                        // Availabilities
-                        .requestMatchers("/availabilities/**")
-                        .hasAnyRole("DOCTOR", "PATIENT")
-                        // Role based endpoints
-                        .requestMatchers("/patient/**")
-                        .hasRole("PATIENT")
-                        .requestMatchers("/doctor/**")
-                        .hasRole("DOCTOR")
-                        .requestMatchers("/pharmacy/**")
-                        .hasRole("PHARMACIST")
-                        .requestMatchers("/admin/**")
-                        .hasRole("ADMIN")
-                        // Any other request
+                        .requestMatchers("/patient/**").hasRole("PATIENT")
+                        .requestMatchers("/doctor/**").hasRole("DOCTOR")
+                        .requestMatchers("/pharmacy/**").hasRole("PHARMACIST")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter,
