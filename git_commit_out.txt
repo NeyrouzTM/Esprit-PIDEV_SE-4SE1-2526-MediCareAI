@@ -1,0 +1,11 @@
+error: pathspec 'test:' did not match any file(s) known to git
+error: pathspec 'add' did not match any file(s) known to git
+error: pathspec 'medical' did not match any file(s) known to git
+error: pathspec 'CRUD' did not match any file(s) known to git
+error: pathspec 'unit/controller' did not match any file(s) known to git
+error: pathspec 'suites' did not match any file(s) known to git
+error: pathspec 'and' did not match any file(s) known to git
+error: pathspec 'expose' did not match any file(s) known to git
+error: pathspec 'full' did not match any file(s) known to git
+error: pathspec 'swagger' did not match any file(s) known to git
+error: pathspec 'groups\ ' did not match any file(s) known to git
