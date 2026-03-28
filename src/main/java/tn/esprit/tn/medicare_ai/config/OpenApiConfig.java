@@ -72,11 +72,50 @@ public class OpenApiConfig {
                 .build();
     }
     @Bean
-    public GroupedOpenApi symptomApi() {
+    public GroupedOpenApi authApi() {
         return GroupedOpenApi.builder()
-                .group("/symptoms")
-                .pathsToMatch("//symptoms/**")
+                .group("auth")                  // Nom du groupe dans Swagger UI
+                .pathsToMatch("/auth/**")       // Tous les endpoints commençant par /auth
+                .build();
+    }
+    // Groupe pour les endpoints du Forum
+    @Bean
+    public GroupedOpenApi forumApi() {
+        return GroupedOpenApi.builder()
+                .group("Forum")
+                .pathsToMatch("/api/forum/**")
+                .build();
+    }
+    @Bean
+    public GroupedOpenApi meetingApi() {          // ← Groupe pour les Meetings
+        return GroupedOpenApi.builder()
+                .group("Meetings (Réunions)")
+                .pathsToMatch("/api/meetings/**")   // ← Tous les endpoints des réunions
+                .build();
+    }
+    // Groupe pour les endpoints des Abonnements
+    @Bean
+    public GroupedOpenApi subscriptionApi() {
+        return GroupedOpenApi.builder()
+                .group("Subscriptions")
+                .pathsToMatch("/api/subscriptions/**", "/api/subscription-plans/**")
+                .build();
+    }
+    // Groupe pour les endpoints de Collaboration
+    @Bean
+    public GroupedOpenApi collaborationApi() {
+        return GroupedOpenApi.builder()
+                .group("Collaboration")
+                .pathsToMatch("/api/collaboration/**")
                 .build();
     }
 
+    // Groupe pour tous les endpoints (optionnel)
+    @Bean
+    public GroupedOpenApi allApi() {
+        return GroupedOpenApi.builder()
+                .group("All Endpoints")
+                .pathsToMatch("/api/**")
+                .build();
+    }
 }

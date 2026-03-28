@@ -29,18 +29,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+    private boolean isPremium = false;
 
     @Builder.Default
     private boolean enabled = true;
 
-    @ManyToMany
-    @JoinTable(
-            name = "user_events",  // nom de la table de jointure
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "event_id")
-    )
-    private List<HealthEvent> events;
-
-    @OneToMany(mappedBy = "user")  // ou "participant" selon votre nommage
-    private List<Feedback> feedbacks;
+    public boolean isPremium() {
+        return isPremium;
+    }
 }
