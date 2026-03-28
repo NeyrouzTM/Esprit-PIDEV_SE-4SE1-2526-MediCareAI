@@ -47,7 +47,36 @@ public class OpenApiConfig {
     public GroupedOpenApi pharmacyApi() {
         return GroupedOpenApi.builder()
                 .group("e-pharmacy")
-                .pathsToMatch("/api/pharmacy/**")
+                .pathsToMatch("/api/pharmacy/**", "/api/users/**", "/auth/**")
                 .build();
     }
+    @Bean
+    public GroupedOpenApi diseaseApi() {
+        return GroupedOpenApi.builder()
+                .group("diseases")
+                .pathsToMatch("/diseases/**")
+                .build();
+    }
+    @Bean
+    public GroupedOpenApi eventApi() {
+        return GroupedOpenApi.builder()
+                .group("events")
+                .pathsToMatch("/events/**")
+                .build();
+    }
+    @Bean
+    public GroupedOpenApi specialtyApi() {
+        return GroupedOpenApi.builder()
+                .group("specialties")
+                .pathsToMatch("/specialties/**")
+                .build();
+    }
+    @Bean
+    public GroupedOpenApi symptomApi() {
+        return GroupedOpenApi.builder()
+                .group("/symptoms")
+                .pathsToMatch("//symptoms/**")
+                .build();
+    }
+
 }

@@ -13,6 +13,7 @@ import tn.esprit.tn.medicare_ai.dto.request.DrugInteractionCheckRequest;
 import tn.esprit.tn.medicare_ai.dto.response.DrugInteractionAlertDto;
 import tn.esprit.tn.medicare_ai.dto.response.DrugInteractionCheckResponse;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
+import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -63,6 +64,9 @@ class InteractionControllerTest {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private VerificationCodeRepository verificationCodeRepository;
 
     @Test
     @DisplayName("POST /api/pharmacy/interactions/check: returns alerts when interactions exist")
