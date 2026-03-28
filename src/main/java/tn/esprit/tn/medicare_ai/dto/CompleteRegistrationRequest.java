@@ -1,0 +1,29 @@
+package tn.esprit.tn.medicare_ai.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import tn.esprit.tn.medicare_ai.entity.Role;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CompleteRegistrationRequest {
+
+    @Email(message = "Email must be valid")
+    @NotBlank(message = "Email is required")
+    private String email;
+
+    @NotBlank(message = "Full name is required")
+    private String fullName;
+
+    @NotBlank(message = "Password is required")
+    private String password;
+
+    private Role role;
+}
+

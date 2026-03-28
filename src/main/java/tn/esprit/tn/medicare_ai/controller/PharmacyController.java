@@ -55,6 +55,52 @@ public class PharmacyController {
         return ResponseEntity.ok(medicineService.searchMedicines(request));
     }
 
+    @PostMapping("/medicines")
+    @PreAuthorize("hasRole('PHARMACIST')")
+    @Operation(summary = "Add medicine", description = "Adds a new medicine to the catalog. Pharmacist role required.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Medicine created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid medicine payload", content = @Content(schema = @Schema(implementation = tn.esprit.tn.medicare_ai.exception.ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Only pharmacists can add medicines")
+    })
+    public ResponseEntity<MedicineDetailResponse> createMedicine(@Valid @RequestBody CreateMedicineRequest request) {
+        MedicineDetailResponse created = medicineService.createMedicine(request);
+        String location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(created.getId())
+                .toUriString();
+        return ResponseEntity.created(java.net.URI.create(location)).body(created);
+    }
+
+    @PutMapping("/medicines/{id}")
+    @PreAuthorize("hasRole('PHARMACIST')")
+    @Operation(summary = "Update medicine", description = "Updates an existing medicine in the catalog. Pharmacist role required.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Medicine updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid update payload", content = @Content(schema = @Schema(implementation = tn.esprit.tn.medicare_ai.exception.ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Only pharmacists can update medicines"),
+            @ApiResponse(responseCode = "404", description = "Medicine not found")
+    })
+    public ResponseEntity<MedicineDetailResponse> updateMedicine(
+            @Parameter(description = "Medicine identifier", example = "10") @PathVariable Long id,
+            @Valid @RequestBody CreateMedicineRequest request) {
+        return ResponseEntity.ok(medicineService.updateMedicine(id, request));
+    }
+
+    @DeleteMapping("/medicines/{id}")
+    @PreAuthorize("hasRole('PHARMACIST')")
+    @Operation(summary = "Delete medicine", description = "Deletes a medicine from the catalog. Pharmacist role required.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Medicine deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Only pharmacists can delete medicines"),
+            @ApiResponse(responseCode = "404", description = "Medicine not found")
+    })
+    public ResponseEntity<Void> deleteMedicine(
+            @Parameter(description = "Medicine identifier", example = "10") @PathVariable Long id) {
+        medicineService.deleteMedicine(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/medicines/{id}")
     @Operation(summary = "Get medicine details", description = "Returns detailed information for a medicine including known interaction alerts.")
     @ApiResponses(value = {

@@ -39,7 +39,7 @@ public class OpenApiConfig {
     public GroupedOpenApi pharmacyApi() {
         return GroupedOpenApi.builder()
                 .group("e-pharmacy")
-                .pathsToMatch("/api/pharmacy/**")
+                .pathsToMatch("/api/pharmacy/**", "/api/users/**", "/auth/**")
                 .build();
     }
 }
