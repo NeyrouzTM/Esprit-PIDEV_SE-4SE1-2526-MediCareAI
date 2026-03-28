@@ -27,7 +27,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+    private boolean isPremium = false;
 
     @Builder.Default
     private boolean enabled = true;
+
+    public boolean isPremium() {
+        return isPremium;
+    }
 }
