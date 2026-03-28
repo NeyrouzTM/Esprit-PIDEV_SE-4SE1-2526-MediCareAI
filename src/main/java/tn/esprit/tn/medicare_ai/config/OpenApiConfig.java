@@ -36,6 +36,14 @@ public class OpenApiConfig {
     }
 
     @Bean
+    public GroupedOpenApi allApi() {
+        return GroupedOpenApi.builder()
+                .group("all")
+                .pathsToMatch("/**")
+                .build();
+    }
+
+    @Bean
     public GroupedOpenApi pharmacyApi() {
         return GroupedOpenApi.builder()
                 .group("e-pharmacy")

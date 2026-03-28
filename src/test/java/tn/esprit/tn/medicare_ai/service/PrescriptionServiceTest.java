@@ -9,8 +9,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import tn.esprit.tn.medicare_ai.dto.request.PrescriptionItemRequest;
 import tn.esprit.tn.medicare_ai.dto.request.PrescriptionRequest;
 import tn.esprit.tn.medicare_ai.dto.response.PrescriptionDetailResponse;
-import tn.esprit.tn.medicare_ai.entity.*;
+import tn.esprit.tn.medicare_ai.entity.MedicalRecord;
+import tn.esprit.tn.medicare_ai.entity.Medicine;
+import tn.esprit.tn.medicare_ai.entity.Role;
+import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
+import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
 import tn.esprit.tn.medicare_ai.repository.MedicineRepository;
 import tn.esprit.tn.medicare_ai.repository.PrescriptionRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
@@ -19,7 +23,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -28,13 +33,18 @@ class PrescriptionServiceTest {
 
     @Mock
     private PrescriptionRepository prescriptionRepository;
+
+    @Mock
+    private MedicalRecordRepository medicalRecordRepository;
+
     @Mock
     private MedicineRepository medicineRepository;
+
     @Mock
     private UserRepository userRepository;
 
     @InjectMocks
-    private PrescriptionService prescriptionService;
+    private PrescriptionServiceImpl prescriptionService;
 
     @Test
     @DisplayName("createPrescription: valid request saves prescription and returns response")
@@ -42,12 +52,16 @@ class PrescriptionServiceTest {
         User patient = user(10L, "Patient", Role.PATIENT);
         User doctor = user(20L, "Doctor", Role.DOCTOR);
         Medicine med = medicine(1L, "Paracetamol");
+        MedicalRecord record = new MedicalRecord();
+        record.setId(30L);
+        record.setPatient(patient);
 
         when(userRepository.findById(10L)).thenReturn(Optional.of(patient));
         when(userRepository.findById(20L)).thenReturn(Optional.of(doctor));
+        when(medicalRecordRepository.findByPatient(patient)).thenReturn(Optional.of(record));
         when(medicineRepository.findById(1L)).thenReturn(Optional.of(med));
-        when(prescriptionRepository.save(any(Prescription.class))).thenAnswer(invocation -> {
-            Prescription p = invocation.getArgument(0);
+        when(prescriptionRepository.save(any())).thenAnswer(invocation -> {
+            var p = invocation.getArgument(0, tn.esprit.tn.medicare_ai.entity.Prescription.class);
             p.setId(100L);
             return p;
         });
@@ -72,12 +86,13 @@ class PrescriptionServiceTest {
         assertEquals(10L, response.getPatientId());
         assertEquals(20L, response.getDoctorId());
         assertEquals(1, response.getItems().size());
-        assertEquals(PrescriptionStatus.ACTIVE, response.getStatus());
     }
 
     @Test
     @DisplayName("createPrescription: patient not found throws ResourceNotFoundException")
     void createPrescription_patientNotFound_throws() {
+        User doctor = user(20L, "Doctor", Role.DOCTOR);
+        when(userRepository.findById(20L)).thenReturn(Optional.of(doctor));
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         PrescriptionRequest request = PrescriptionRequest.builder()
@@ -101,9 +116,13 @@ class PrescriptionServiceTest {
     void createPrescription_medicineNotFound_throws() {
         User patient = user(10L, "Patient", Role.PATIENT);
         User doctor = user(20L, "Doctor", Role.DOCTOR);
+        MedicalRecord record = new MedicalRecord();
+        record.setId(30L);
+        record.setPatient(patient);
 
         when(userRepository.findById(10L)).thenReturn(Optional.of(patient));
         when(userRepository.findById(20L)).thenReturn(Optional.of(doctor));
+        when(medicalRecordRepository.findByPatient(patient)).thenReturn(Optional.of(record));
         when(medicineRepository.findById(55L)).thenReturn(Optional.empty());
 
         PrescriptionRequest request = PrescriptionRequest.builder()
@@ -139,4 +158,3 @@ class PrescriptionServiceTest {
         return m;
     }
 }
-

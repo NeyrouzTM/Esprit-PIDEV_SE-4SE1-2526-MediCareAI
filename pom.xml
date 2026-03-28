@@ -99,11 +99,6 @@
             <version>0.12.5</version>
             <scope>runtime</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>3.0.0</version>
-        </dependency>
         <!-- Email Service -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
