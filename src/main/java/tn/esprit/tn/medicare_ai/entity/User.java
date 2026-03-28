@@ -2,6 +2,8 @@ package tn.esprit.tn.medicare_ai.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @Getter
