@@ -62,7 +62,7 @@ jobs:
         run: mvn checkstyle:check || echo "⚠️ Code style issues found (non-blocking)"
 
       - name: Check pom.xml structure
-        run: mvn help:describe
+        run: mvn -B help:effective-pom -Doutput=target/effective-pom.xml
 
   # ===== STAGE 2: BUILD & UNIT TESTS =====
   build-and-test:
