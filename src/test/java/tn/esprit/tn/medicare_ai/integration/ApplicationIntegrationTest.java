@@ -3,14 +3,18 @@ package tn.esprit.tn.medicare_ai.integration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration tests for the Medicare AI Backend API
@@ -19,73 +23,77 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * They run during the CI/CD pipeline's integration test stage.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @DisplayName("Medicare AI Integration Tests")
 class ApplicationIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @LocalServerPort
+    private int port;
+
+    private HttpClient httpClient;
 
     @BeforeEach
     void setUp() {
-        // Initialize test data if needed
+        httpClient = HttpClient.newHttpClient();
     }
 
     @Test
     @DisplayName("Application context should load successfully")
     void contextLoads() {
-        // This test simply verifies the application context loads
         // If it reaches this point without exceptions, it passes
+        assertTrue(port > 0);
     }
 
     @Test
     @DisplayName("Health endpoint should return UP status")
     void healthEndpointShouldReturnUp() throws Exception {
-        mockMvc.perform(get("/actuator/health"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("UP"));
+        HttpResponse<String> response = get("/actuator/health");
+
+        assertEquals(200, response.statusCode());
+        assertTrue(response.body().contains("\"status\":\"UP\""));
     }
 
     @Test
     @DisplayName("API documentation endpoint should be accessible")
     void apiDocsEndpointShouldBeAccessible() throws Exception {
-        mockMvc.perform(get("/api-docs"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.info.title").exists())
-                .andExpect(jsonPath("$.paths").exists());
+        HttpResponse<String> response = get("/api-docs");
+
+        assertEquals(200, response.statusCode());
+        assertTrue(response.body().contains("\"info\""));
+        assertTrue(response.body().contains("\"paths\""));
     }
 
     @Test
     @DisplayName("Swagger UI should be accessible")
     void swaggerUiShouldBeAccessible() throws Exception {
-        mockMvc.perform(get("/swagger-ui.html"))
-                .andExpect(status().isOk());
+        HttpResponse<String> response = get("/swagger-ui.html");
+
+        assertEquals(200, response.statusCode());
     }
 
     @Test
     @DisplayName("Actuator metrics endpoint should return metrics")
     void actuatorMetricsShouldReturnData() throws Exception {
-        mockMvc.perform(get("/actuator/metrics"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.names").isArray());
+        HttpResponse<String> response = get("/actuator/metrics");
+
+        assertEquals(200, response.statusCode());
+        assertTrue(response.body().contains("\"names\""));
     }
 
     @Test
     @DisplayName("Actuator info endpoint should return application info")
     void actuatorInfoShouldReturnAppInfo() throws Exception {
-        mockMvc.perform(get("/actuator/info"))
-                .andExpect(status().isOk());
+        HttpResponse<String> response = get("/actuator/info");
+
+        assertEquals(200, response.statusCode());
     }
 
-    // Add more integration tests for your specific API endpoints
-    // Example:
-    // @Test
-    // @DisplayName("GET /api/health-events should return list")
-    // void getHealthEventsShouldReturnList() throws Exception {
-    //     mockMvc.perform(get("/api/health-events"))
-    //             .andExpect(status().isOk())
-    //             .andExpect(jsonPath("$").isArray());
-    // }
-}
+    private HttpResponse<String> get(String path) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://localhost:" + port + path))
+                .GET()
+                .build();
 
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+}
