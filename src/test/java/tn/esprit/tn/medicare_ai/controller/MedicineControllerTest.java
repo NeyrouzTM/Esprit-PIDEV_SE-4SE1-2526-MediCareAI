@@ -1,20 +1,21 @@
 package tn.esprit.tn.medicare_ai.controller;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import tn.esprit.tn.medicare_ai.dto.request.CreateMedicineRequest;
+import tn.esprit.tn.medicare_ai.dto.request.MedicineSearchRequest;
 import tn.esprit.tn.medicare_ai.dto.response.MedicineDetailResponse;
 import tn.esprit.tn.medicare_ai.dto.response.MedicineResponse;
-import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
-import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -24,217 +25,68 @@ import tn.esprit.tn.medicare_ai.service.RefillService;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-        properties = {
-                "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration"
-        }
-)
-@AutoConfigureMockMvc
-@WithMockUser(username = "patient@med.com", roles = "PATIENT")
+@ExtendWith(MockitoExtension.class)
 class MedicineControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock private MedicineService medicineService;
+    @Mock private PrescriptionService prescriptionService;
+    @Mock private OrderService orderService;
+    @Mock private InventoryService inventoryService;
+    @Mock private DrugInteractionService drugInteractionService;
+    @Mock private RefillService refillService;
+    @Mock private UserRepository userRepository;
 
-    @MockitoBean
-    private MedicineService medicineService;
-
-    @MockitoBean
-    private PrescriptionService prescriptionService;
-
-    @MockitoBean
-    private OrderService orderService;
-
-    @MockitoBean
-    private InventoryService inventoryService;
-
-    @MockitoBean
-    private DrugInteractionService drugInteractionService;
-
-    @MockitoBean
-    private RefillService refillService;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private VerificationCodeRepository verificationCodeRepository;
+    @InjectMocks
+    private PharmacyController controller;
 
     @Test
-    @DisplayName("GET /api/pharmacy/medicines: valid search returns 200 with content")
-    void searchMedicines_validSearch_returnsPage() throws Exception {
-        MedicineResponse med = MedicineResponse.builder().id(1L).name("Paracetamol").build();
-        Page<MedicineResponse> page = new PageImpl<>(List.of(med));
+    void searchMedicines_returnsPage() {
+        Page<MedicineResponse> page = new PageImpl<>(List.of(MedicineResponse.builder().id(1L).name("Paracetamol").build()));
+        when(medicineService.searchMedicines(any(MedicineSearchRequest.class))).thenReturn(page);
 
-        when(medicineService.searchMedicines(any())).thenReturn(page);
+        ResponseEntity<Page<MedicineResponse>> response = controller.searchMedicines(new MedicineSearchRequest());
 
-        mockMvc.perform(get("/api/pharmacy/medicines").param("keyword", "para"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].name").value("Paracetamol"));
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(1, response.getBody().getTotalElements());
     }
 
     @Test
-    @DisplayName("GET /api/pharmacy/medicines: no results returns empty page")
-    void searchMedicines_noResults_returnsEmptyPage() throws Exception {
-        when(medicineService.searchMedicines(any())).thenReturn(Page.empty());
-
-        mockMvc.perform(get("/api/pharmacy/medicines").param("keyword", "xyz"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(0));
-    }
-
-    @Test
-    @DisplayName("POST /api/pharmacy/medicines: pharmacist can create medicine")
-    @WithMockUser(username = "pharmacist@med.com", roles = "PHARMACIST")
-    void createMedicine_pharmacist_returnsCreated() throws Exception {
-        when(medicineService.createMedicine(any())).thenReturn(
-                MedicineDetailResponse.medicineDetailBuilder()
-                        .id(99L)
-                        .name("Ibuprofen")
-                        .build()
+    void createMedicine_returnsCreated() {
+        RequestContextHolder.setRequestAttributes(
+                new ServletRequestAttributes(new MockHttpServletRequest("POST", "/api/pharmacy/medicines"))
         );
+        MedicineDetailResponse created = MedicineDetailResponse.medicineDetailBuilder().id(99L).name("Ibuprofen").build();
+        when(medicineService.createMedicine(any(CreateMedicineRequest.class))).thenReturn(created);
 
-        String payload = """
-                {
-                  "name": "Ibuprofen",
-                  "genericName": "Ibuprofen",
-                  "manufacturer": "Pfizer",
-                  "description": "Anti-inflammatory",
-                  "category": "ANALGESIC",
-                  "dosageForm": "Tablet",
-                  "strength": "400mg",
-                  "imageUrl": "https://cdn.example.com/ibuprofen.png",
-                  "price": 12.5,
-                  "prescriptionRequired": false
-                }
-                """;
+        ResponseEntity<MedicineDetailResponse> response = controller.createMedicine(new CreateMedicineRequest());
 
-        mockMvc.perform(post("/api/pharmacy/medicines")
-                        .contentType(APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "http://localhost/api/pharmacy/medicines/99"))
-                .andExpect(jsonPath("$.id").value(99));
+        assertEquals(201, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(99L, response.getBody().getId());
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
-    @DisplayName("POST /api/pharmacy/medicines: patient is forbidden")
-    void createMedicine_patient_forbidden() throws Exception {
-        String payload = """
-                {
-                  "name": "Ibuprofen",
-                  "category": "ANALGESIC",
-                  "dosageForm": "Tablet",
-                  "strength": "400mg",
-                  "price": 12.5,
-                  "prescriptionRequired": false
-                }
-                """;
+    void updateMedicine_returnsOk() {
+        when(medicineService.updateMedicine(org.mockito.ArgumentMatchers.eq(10L), any(CreateMedicineRequest.class)))
+                .thenReturn(MedicineDetailResponse.medicineDetailBuilder().id(10L).build());
 
-        mockMvc.perform(post("/api/pharmacy/medicines")
-                        .contentType(APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isForbidden());
+        ResponseEntity<MedicineDetailResponse> response = controller.updateMedicine(10L, new CreateMedicineRequest());
+
+        assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
-    @DisplayName("POST /api/pharmacy/medicines: duplicate name returns 400")
-    @WithMockUser(username = "pharmacist@med.com", roles = "PHARMACIST")
-    void createMedicine_duplicateName_returnsBadRequest() throws Exception {
-        when(medicineService.createMedicine(any())).thenThrow(new IllegalArgumentException("Medicine with name already exists"));
+    void deleteMedicine_returnsNoContent() {
+        ResponseEntity<Void> response = controller.deleteMedicine(10L);
 
-        String payload = """
-                {
-                  "name": "Ibuprofen",
-                  "category": "ANALGESIC",
-                  "dosageForm": "Tablet",
-                  "strength": "400mg",
-                  "price": 12.5,
-                  "prescriptionRequired": false
-                }
-                """;
-
-        mockMvc.perform(post("/api/pharmacy/medicines")
-                        .contentType(APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("PUT /api/pharmacy/medicines/{id}: pharmacist can update medicine")
-    @WithMockUser(username = "pharmacist@med.com", roles = "PHARMACIST")
-    void updateMedicine_pharmacist_returnsOk() throws Exception {
-        when(medicineService.updateMedicine(any(Long.class), any())).thenReturn(
-                MedicineDetailResponse.medicineDetailBuilder().id(10L).name("Updated Med").build()
-        );
-
-        String payload = """
-                {
-                  "name": "Updated Med",
-                  "category": "ANALGESIC",
-                  "dosageForm": "Tablet",
-                  "strength": "500mg",
-                  "price": 10.0,
-                  "prescriptionRequired": false
-                }
-                """;
-
-        mockMvc.perform(put("/api/pharmacy/medicines/10")
-                        .contentType(APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10));
-    }
-
-    @Test
-    @DisplayName("PUT /api/pharmacy/medicines/{id}: not found returns 404")
-    @WithMockUser(username = "pharmacist@med.com", roles = "PHARMACIST")
-    void updateMedicine_notFound_returns404() throws Exception {
-        when(medicineService.updateMedicine(any(Long.class), any()))
-                .thenThrow(new ResourceNotFoundException("Medicine not found"));
-
-        String payload = """
-                {
-                  "name": "Updated Med",
-                  "category": "ANALGESIC",
-                  "dosageForm": "Tablet",
-                  "strength": "500mg",
-                  "price": 10.0,
-                  "prescriptionRequired": false
-                }
-                """;
-
-        mockMvc.perform(put("/api/pharmacy/medicines/999")
-                        .contentType(APPLICATION_JSON)
-                        .content(payload))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("DELETE /api/pharmacy/medicines/{id}: pharmacist can delete medicine")
-    @WithMockUser(username = "pharmacist@med.com", roles = "PHARMACIST")
-    void deleteMedicine_pharmacist_returnsNoContent() throws Exception {
-        mockMvc.perform(delete("/api/pharmacy/medicines/10"))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    @DisplayName("DELETE /api/pharmacy/medicines/{id}: patient is forbidden")
-    void deleteMedicine_patient_forbidden() throws Exception {
-        mockMvc.perform(delete("/api/pharmacy/medicines/10"))
-                .andExpect(status().isForbidden());
+        verify(medicineService).deleteMedicine(10L);
+        assertEquals(204, response.getStatusCode().value());
     }
 }

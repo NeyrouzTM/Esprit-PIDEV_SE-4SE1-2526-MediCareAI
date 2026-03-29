@@ -1,0 +1,74 @@
+---
+# ServiceMonitor for Prometheus monitoring (if using Prometheus Operator)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: medicare-ai-monitor
+  namespace: medicare-ai
+  labels:
+    app: medicare-ai
+spec:
+  selector:
+    matchLabels:
+      app: medicare-ai
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+
+---
+# PrometheusRule for alerting
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: medicare-ai-rules
+  namespace: medicare-ai
+spec:
+  groups:
+    - name: medicare-ai-alerts
+      interval: 30s
+      rules:
+        - alert: MedicareAIPodDown
+          expr: up{job="medicare-ai"} == 0
+          for: 2m
+          annotations:
+            summary: "Medicare AI pod is down"
+            description: "Medicare AI pod {{ $labels.pod }} has been down for 2 minutes"
+
+        - alert: MedicareAIHighCPU
+          expr: rate(container_cpu_usage_seconds_total{pod=~"medicare-ai.*"}[5m]) > 0.8
+          for: 5m
+          annotations:
+            summary: "Medicare AI high CPU usage"
+            description: "Medicare AI pod {{ $labels.pod }} CPU usage is above 80%"
+
+        - alert: MedicareAIHighMemory
+          expr: container_memory_usage_bytes{pod=~"medicare-ai.*"} / container_spec_memory_limit_bytes > 0.9
+          for: 5m
+          annotations:
+            summary: "Medicare AI high memory usage"
+            description: "Medicare AI pod {{ $labels.pod }} memory usage is above 90%"
+
+        - alert: DatabaseConnectionPoolExhausted
+          expr: rate(mysql_global_status_threads_connected[5m]) > 18
+          for: 2m
+          annotations:
+            summary: "Database connection pool almost exhausted"
+            description: "Database active connections are above 18"
+
+---
+# PersistentVolumeClaim for application logs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: medicare-ai-logs-pvc
+  namespace: medicare-ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 5Gi
+

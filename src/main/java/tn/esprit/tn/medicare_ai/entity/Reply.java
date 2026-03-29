@@ -29,5 +29,6 @@ public class Reply {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }

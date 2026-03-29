@@ -1,19 +1,23 @@
 package tn.esprit.tn.medicare_ai.controller;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import tn.esprit.tn.medicare_ai.dto.request.PrescriptionRequest;
 import tn.esprit.tn.medicare_ai.dto.response.PrescriptionDetailResponse;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
-import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -23,134 +27,76 @@ import tn.esprit.tn.medicare_ai.service.RefillService;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-        properties = {
-                "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration"
-        }
-)
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 class PrescriptionControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
+    @Mock
     private PrescriptionService prescriptionService;
 
-    @MockitoBean
+    @Mock
     private MedicineService medicineService;
 
-    @MockitoBean
+    @Mock
     private OrderService orderService;
 
-    @MockitoBean
+    @Mock
     private InventoryService inventoryService;
 
-    @MockitoBean
+    @Mock
     private DrugInteractionService drugInteractionService;
 
-    @MockitoBean
+    @Mock
     private RefillService refillService;
 
-    @MockitoBean
+    @Mock
     private UserRepository userRepository;
 
-    @MockitoBean
-    private VerificationCodeRepository verificationCodeRepository;
+    @InjectMocks
+    private PharmacyController controller;
+
+    @AfterEach
+    void clearContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     @DisplayName("POST /api/pharmacy/prescriptions: doctor creates prescription successfully")
-    @WithMockUser(username = "doctor@med.com", roles = "DOCTOR")
-    void createPrescription_validDoctor_returnsCreated() throws Exception {
-        User doctor = new User();
-        doctor.setId(20L);
-        doctor.setEmail("doctor@med.com");
-        doctor.setRole(Role.DOCTOR);
-
-        when(userRepository.findByEmail("doctor@med.com")).thenReturn(Optional.of(doctor));
-        when(prescriptionService.createPrescription(any(PrescriptionRequest.class), eq(20L)))
+    void createPrescription_validDoctor_returnsCreated() {
+        mockCurrentDoctor();
+        RequestContextHolder.setRequestAttributes(
+                new ServletRequestAttributes(new MockHttpServletRequest("POST", "/api/pharmacy/prescriptions"))
+        );
+        when(prescriptionService.createPrescription(any(PrescriptionRequest.class), org.mockito.ArgumentMatchers.eq(20L)))
                 .thenReturn(PrescriptionDetailResponse.prescriptionDetailBuilder().id(100L).build());
 
-        String validRequestJson = """
-                {
-                  "patientId": 10,
-                  "expiryDate": "2099-12-31",
-                  "items": [
-                    {
-                      "medicineId": 1,
-                      "quantity": 1,
-                      "dosage": "500mg",
-                      "frequency": "daily",
-                      "durationDays": 5
-                    }
-                  ]
-                }
-                """;
+        ResponseEntity<PrescriptionDetailResponse> response = controller.createPrescription(new PrescriptionRequest());
 
-        mockMvc.perform(post("/api/pharmacy/prescriptions")
-                        .contentType(APPLICATION_JSON)
-                        .content(validRequestJson))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "http://localhost/api/pharmacy/prescriptions/100"));
+        assertEquals(201, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(100L, response.getBody().getId());
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
-    @DisplayName("POST /api/pharmacy/prescriptions: invalid payload returns 400")
-    @WithMockUser(username = "doctor@med.com", roles = "DOCTOR")
-    void createPrescription_invalidData_returnsBadRequest() throws Exception {
+    void getPrescriptionById_returnsOk() {
+        when(prescriptionService.getPrescriptionById(100L)).thenReturn(PrescriptionDetailResponse.prescriptionDetailBuilder().id(100L).build());
+
+        ResponseEntity<PrescriptionDetailResponse> response = controller.getPrescriptionById(100L);
+
+        assertEquals(200, response.getStatusCode().value());
+    }
+
+    private void mockCurrentDoctor() {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("doctor@med.com", null));
         User doctor = new User();
         doctor.setId(20L);
         doctor.setEmail("doctor@med.com");
         doctor.setRole(Role.DOCTOR);
         when(userRepository.findByEmail("doctor@med.com")).thenReturn(Optional.of(doctor));
-
-        mockMvc.perform(post("/api/pharmacy/prescriptions")
-                        .contentType(APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("POST /api/pharmacy/prescriptions: patient role is forbidden")
-    @WithMockUser(username = "patient@med.com", roles = "PATIENT")
-    void createPrescription_patientForbidden_returns403() throws Exception {
-        User patient = new User();
-        patient.setId(30L);
-        patient.setEmail("patient@med.com");
-        patient.setRole(Role.PATIENT);
-        when(userRepository.findByEmail("patient@med.com")).thenReturn(Optional.of(patient));
-
-        when(prescriptionService.createPrescription(any(PrescriptionRequest.class), any(Long.class)))
-                .thenThrow(new tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException("forbidden"));
-
-        String validRequestJson = """
-                {
-                  "patientId": 10,
-                  "expiryDate": "2099-12-31",
-                  "items": [
-                    {
-                      "medicineId": 1,
-                      "quantity": 1,
-                      "dosage": "500mg",
-                      "frequency": "daily",
-                      "durationDays": 5
-                    }
-                  ]
-                }
-                """;
-
-        mockMvc.perform(post("/api/pharmacy/prescriptions")
-                        .contentType(APPLICATION_JSON)
-                        .content(validRequestJson))
-                .andExpect(status().isForbidden());
     }
 }

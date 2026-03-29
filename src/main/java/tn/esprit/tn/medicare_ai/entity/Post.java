@@ -30,14 +30,17 @@ public class Post {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @ElementCollection
+    @Builder.Default
     private List<String> tags = new ArrayList<>();
 
+    @Builder.Default
     private boolean isPremiumOnly = false;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Reply> replies = new ArrayList<>();
 }
-

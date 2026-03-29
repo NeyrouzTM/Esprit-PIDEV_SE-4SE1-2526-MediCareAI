@@ -1,0 +1,237 @@
+.PHONY: k8s-help k8s-setup k8s-deploy k8s-logs k8s-status k8s-delete k8s-scale k8s-port-forward k8s-backup k8s-restore
+
+# Kubernetes management targets
+k8s-help:
+	@echo "$(BLUE)Kubernetes Management Commands$(NC)"
+	@echo ""
+	@echo "$(GREEN)Setup:$(NC)"
+	@echo "  make k8s-setup              Setup Kubernetes cluster (prerequisites)"
+	@echo ""
+	@echo "$(GREEN)Deployment:$(NC)"
+	@echo "  make k8s-deploy             Deploy application to Kubernetes"
+	@echo "  make k8s-deploy-staging     Deploy to staging cluster"
+	@echo "  make k8s-deploy-prod        Deploy to production cluster"
+	@echo ""
+	@echo "$(GREEN)Management:$(NC)"
+	@echo "  make k8s-status             Check application status"
+	@echo "  make k8s-health             Run health checks"
+	@echo "  make k8s-logs               View application logs"
+	@echo "  make k8s-logs-follow        Follow logs in real-time"
+	@echo "  make k8s-scale              Scale replicas"
+	@echo "  make k8s-port-forward       Port forward to service"
+	@echo ""
+	@echo "$(GREEN)Database:$(NC)"
+	@echo "  make k8s-db-backup          Backup database"
+	@echo "  make k8s-db-restore         Restore database"
+	@echo "  make k8s-db-shell           Connect to database shell"
+	@echo ""
+	@echo "$(GREEN)Cleanup:$(NC)"
+	@echo "  make k8s-delete             Delete application from cluster"
+	@echo "  make k8s-rollback           Rollback to previous version"
+
+# Setup
+k8s-setup:
+	@echo "$(BLUE)Setting up Kubernetes prerequisites...$(NC)"
+	@chmod +x scripts/k8s-deploy.sh scripts/k8s-health-check.sh
+	@echo "$(GREEN)✓ Setup completed$(NC)"
+	@echo "Next steps:"
+	@echo "  1. Setup KubeAdm cluster (see KUBEADM_SETUP_GUIDE.md)"
+	@echo "  2. Configure kubeconfig: export KUBECONFIG=~/.kube/config"
+	@echo "  3. Deploy application: make k8s-deploy"
+
+# Deployment
+k8s-deploy:
+	@echo "$(BLUE)Deploying Medicare AI to Kubernetes...$(NC)"
+	@./scripts/k8s-deploy.sh latest
+	@echo "$(GREEN)✓ Deployment completed$(NC)"
+
+k8s-deploy-staging:
+	@echo "$(BLUE)Deploying to staging cluster...$(NC)"
+	@./scripts/k8s-deploy.sh staging
+
+k8s-deploy-prod:
+	@echo "$(BLUE)Deploying to production cluster...$(NC)"
+	@./scripts/k8s-deploy.sh production
+
+# Status & Monitoring
+k8s-status:
+	@echo "$(BLUE)Medicare AI Kubernetes Status$(NC)"
+	@echo ""
+	@echo "Nodes:"
+	@kubectl get nodes
+	@echo ""
+	@echo "Pods:"
+	@kubectl get pods -n medicare-ai
+	@echo ""
+	@echo "Services:"
+	@kubectl get svc -n medicare-ai
+	@echo ""
+	@echo "Deployments:"
+	@kubectl get deployments -n medicare-ai
+	@echo ""
+	@echo "Ingress:"
+	@kubectl get ingress -n medicare-ai
+
+k8s-health:
+	@bash scripts/k8s-health-check.sh
+
+k8s-logs:
+	@kubectl logs deployment/medicare-ai -n medicare-ai
+
+k8s-logs-follow:
+	@kubectl logs -f deployment/medicare-ai -n medicare-ai
+
+k8s-events:
+	@kubectl get events -n medicare-ai --sort-by='.lastTimestamp'
+
+# Scaling
+k8s-scale:
+	@read -p "Enter number of replicas (current: 3): " REPLICAS; \
+	kubectl scale deployment/medicare-ai --replicas=$$REPLICAS -n medicare-ai; \
+	echo "$(GREEN)✓ Scaled to $$REPLICAS replicas$(NC)"
+
+k8s-scale-up:
+	@kubectl scale deployment/medicare-ai --replicas=5 -n medicare-ai
+	@echo "$(GREEN)✓ Scaled up to 5 replicas$(NC)"
+
+k8s-scale-down:
+	@kubectl scale deployment/medicare-ai --replicas=3 -n medicare-ai
+	@echo "$(GREEN)✓ Scaled down to 3 replicas$(NC)"
+
+# Port Forwarding
+k8s-port-forward:
+	@echo "$(BLUE)Port forwarding to Medicare AI service...$(NC)"
+	@echo "Access at: http://localhost:8080"
+	@kubectl port-forward -n medicare-ai svc/medicare-ai-service 8080:80
+
+k8s-port-forward-mysql:
+	@echo "$(BLUE)Port forwarding to MySQL...$(NC)"
+	@echo "Connect at: localhost:3306"
+	@kubectl port-forward -n medicare-ai svc/mysql-service 3306:3306
+
+k8s-port-forward-redis:
+	@echo "$(BLUE)Port forwarding to Redis...$(NC)"
+	@echo "Connect at: localhost:6379"
+	@kubectl port-forward -n medicare-ai svc/redis-service 6379:6379
+
+# Database Operations
+k8s-db-backup:
+	@echo "$(BLUE)Backing up Medicare AI database...$(NC)"
+	@POD=$$(kubectl get pod -n medicare-ai -l app=mysql -o jsonpath='{.items[0].metadata.name}'); \
+	kubectl exec -it $$POD -n medicare-ai -- \
+	  mysqldump -u root -p$${DB_PASSWORD} --all-databases > backup-mysql-$$(date +%Y%m%d-%H%M%S).sql
+	@echo "$(GREEN)✓ Database backup completed$(NC)"
+
+k8s-db-restore:
+	@read -p "Enter backup file path: " BACKUP_FILE; \
+	POD=$$(kubectl get pod -n medicare-ai -l app=mysql -o jsonpath='{.items[0].metadata.name}'); \
+	kubectl exec -i $$POD -n medicare-ai -- \
+	  mysql -u root -p$${DB_PASSWORD} < $$BACKUP_FILE; \
+	echo "$(GREEN)✓ Database restore completed$(NC)"
+
+k8s-db-shell:
+	@POD=$$(kubectl get pod -n medicare-ai -l app=mysql -o jsonpath='{.items[0].metadata.name}'); \
+	kubectl exec -it $$POD -n medicare-ai -- mysql -u root -p$${DB_PASSWORD}
+
+# Updates & Rollback
+k8s-update:
+	@read -p "Enter new image tag: " TAG; \
+	kubectl set image deployment/medicare-ai \
+	  medicare-ai=ghcr.io/your-org/medicare-ai:$$TAG \
+	  -n medicare-ai; \
+	kubectl rollout status deployment/medicare-ai -n medicare-ai
+
+k8s-rollback:
+	@echo "$(BLUE)Rolling back to previous version...$(NC)"
+	@kubectl rollout undo deployment/medicare-ai -n medicare-ai
+	@kubectl rollout status deployment/medicare-ai -n medicare-ai
+	@echo "$(GREEN)✓ Rollback completed$(NC)"
+
+k8s-rollout-history:
+	@kubectl rollout history deployment/medicare-ai -n medicare-ai
+
+# Resource Management
+k8s-describe:
+	@read -p "Enter pod name: " POD; \
+	kubectl describe pod $$POD -n medicare-ai
+
+k8s-resources:
+	@echo "$(BLUE)Kubernetes Resource Usage$(NC)"
+	@echo ""
+	@echo "Nodes:"
+	@kubectl top nodes
+	@echo ""
+	@echo "Pods:"
+	@kubectl top pods -n medicare-ai
+
+k8s-hpa-status:
+	@kubectl get hpa -n medicare-ai
+	@echo ""
+	@kubectl describe hpa medicare-ai-hpa -n medicare-ai
+
+# Cleanup
+k8s-delete:
+	@read -p "Are you sure you want to delete the application? (yes/no): " CONFIRM; \
+	if [ "$$CONFIRM" = "yes" ]; then \
+		kubectl delete namespace medicare-ai; \
+		echo "$(GREEN)✓ Application deleted$(NC)"; \
+	else \
+		echo "Cancelled"; \
+	fi
+
+k8s-delete-pvc:
+	@echo "$(RED)⚠ WARNING: This will delete persistent data!$(NC)"
+	@read -p "Are you sure? (yes/no): " CONFIRM; \
+	if [ "$$CONFIRM" = "yes" ]; then \
+		kubectl delete pvc --all -n medicare-ai; \
+		echo "$(GREEN)✓ PVCs deleted$(NC)"; \
+	else \
+		echo "Cancelled"; \
+	fi
+
+# Cluster Operations
+k8s-cluster-info:
+	@kubectl cluster-info
+	@echo ""
+	@kubectl version
+	@echo ""
+	@kubectl get nodes -o wide
+
+k8s-cluster-status:
+	@bash scripts/k8s-health-check.sh
+
+k8s-pod-shell:
+	@POD=$$(kubectl get pod -n medicare-ai -l app=medicare-ai -o jsonpath='{.items[0].metadata.name}'); \
+	kubectl exec -it $$POD -n medicare-ai -- /bin/bash
+
+# Debugging
+k8s-debug-pod:
+	@read -p "Enter pod name: " POD; \
+	kubectl describe pod $$POD -n medicare-ai; \
+	echo ""; \
+	kubectl logs $$POD -n medicare-ai
+
+k8s-exec-pod:
+	@read -p "Enter pod name: " POD; \
+	read -p "Enter command: " CMD; \
+	kubectl exec -it $$POD -n medicare-ai -- $$CMD
+
+k8s-get-kubeconfig:
+	@echo "$(BLUE)Kubeconfig path:$(NC)"
+	@echo "$${KUBECONFIG}"
+	@echo ""
+	@echo "$(BLUE)Kubeconfig contents:$(NC)"
+	@cat $${KUBECONFIG}
+
+# Documentation
+k8s-docs:
+	@echo "For detailed documentation, see:"
+	@echo "  - KUBERNETES_DEPLOYMENT_GUIDE.md"
+	@echo "  - KUBEADM_SETUP_GUIDE.md"
+	@echo ""
+	@echo "Quick start:"
+	@echo "  1. make k8s-setup"
+	@echo "  2. Setup KubeAdm cluster (see KUBEADM_SETUP_GUIDE.md)"
+	@echo "  3. make k8s-deploy"
+	@echo "  4. make k8s-status"
+

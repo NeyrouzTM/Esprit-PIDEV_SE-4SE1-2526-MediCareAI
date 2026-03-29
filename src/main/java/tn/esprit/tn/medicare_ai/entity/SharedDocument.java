@@ -35,6 +35,7 @@ public class SharedDocument {
     private User uploader;
 
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<Annotation> annotations = new ArrayList<>();
 
     private LocalDateTime uploadedAt;

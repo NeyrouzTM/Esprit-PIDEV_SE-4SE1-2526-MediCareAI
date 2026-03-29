@@ -1,0 +1,80 @@
+---
+# ConfigMap for non-sensitive application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medicare-ai-config
+  namespace: medicare-ai
+data:
+  # Server Configuration
+  server.port: "8080"
+  server.servlet.context-path: "/api"
+  server.compression.enabled: "true"
+  server.compression.min-response-size: "1024"
+
+  # Logging Configuration
+  logging.level.root: "WARN"
+  logging.level.tn.esprit: "INFO"
+  logging.pattern.console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+  # JPA/Hibernate Configuration
+  spring.jpa.hibernate.ddl-auto: "validate"
+  spring.jpa.show-sql: "false"
+  spring.jpa.properties.hibernate.dialect: "org.hibernate.dialect.MySQL8Dialect"
+  spring.jpa.properties.hibernate.format_sql: "false"
+  spring.jpa.open-in-view: "false"
+
+  # Connection Pool
+  spring.datasource.hikari.maximum-pool-size: "20"
+  spring.datasource.hikari.minimum-idle: "10"
+  spring.datasource.hikari.connection-timeout: "30000"
+  spring.datasource.hikari.idle-timeout: "600000"
+  spring.datasource.hikari.max-lifetime: "1800000"
+
+  # Mail Configuration - Timeouts
+  spring.mail.properties.mail.smtp.connectiontimeout: "5000"
+  spring.mail.properties.mail.smtp.timeout: "5000"
+  spring.mail.properties.mail.smtp.writetimeout: "5000"
+
+  # API Documentation
+  springdoc.api-docs.path: "/api-docs"
+  springdoc.swagger-ui.enabled: "false"
+
+  # Actuator Configuration
+  management.endpoints.web.exposure.include: "health,info,metrics"
+  management.endpoint.health.show-details: "when-authorized"
+  management.metrics.export.prometheus.enabled: "true"
+
+  # Security Headers
+  server.servlet.session.cookie.secure: "true"
+  server.servlet.session.cookie.http-only: "true"
+  server.servlet.session.cookie.same-site: "strict"
+
+  # Error Handling
+  server.error.include-message: "never"
+  server.error.include-binding-errors: "never"
+  server.error.include-stacktrace: "never"
+
+---
+# ConfigMap for database initialization scripts
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medicare-ai-db-init
+  namespace: medicare-ai
+data:
+  init.sql: |
+    -- Database initialization script
+    -- This script will be executed when the database starts
+    USE medicare_ai;
+    
+    -- Create necessary indexes
+    ALTER TABLE health_events ADD INDEX idx_user_id (user_id);
+    ALTER TABLE appointments ADD INDEX idx_patient_id (patient_id);
+    ALTER TABLE appointments ADD INDEX idx_doctor_id (doctor_id);
+    ALTER TABLE medical_records ADD INDEX idx_patient_id (patient_id);
+    
+    -- Create initial admin user (password should be changed)
+    -- INSERT INTO users (username, email, password, role) VALUES 
+    -- ('admin', 'admin@medicare-ai.com', 'hashed_password', 'ADMIN');
+

@@ -1,0 +1,10 @@
+---
+# Kubernetes Namespace for Medicare AI Application
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: medicare-ai
+  labels:
+    name: medicare-ai
+    environment: production
+

@@ -35,11 +35,14 @@ public class CollaborationSession {
             joinColumns = @JoinColumn(name = "session_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @Builder.Default
     private Set<User> participants = new HashSet<>();
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<SharedDocument> documents = new ArrayList<>();
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }
 

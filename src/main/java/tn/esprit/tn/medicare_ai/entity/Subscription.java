@@ -34,6 +34,7 @@ public class Subscription {
     @Column(nullable = false)
     private SubscriptionStatus status;
 
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // Enum imbriquée (c'est correct, mais on va l'utiliser proprement)

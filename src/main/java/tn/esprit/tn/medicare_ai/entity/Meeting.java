@@ -38,8 +38,10 @@ public class Meeting {
             joinColumns = @JoinColumn(name = "meeting_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @Builder.Default
     private Set<User> participants = new HashSet<>();
 
+    @Builder.Default
     private boolean recorded = false;
 
     private String recordingUrl; // Lien S3

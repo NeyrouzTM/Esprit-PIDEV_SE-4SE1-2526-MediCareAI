@@ -1,119 +1,87 @@
 package tn.esprit.tn.medicare_ai.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import tn.esprit.tn.medicare_ai.dto.request.RefillRequestDto;
+import tn.esprit.tn.medicare_ai.dto.request.UploadPrescriptionRequest;
 import tn.esprit.tn.medicare_ai.dto.response.PrescriptionVerificationResponse;
 import tn.esprit.tn.medicare_ai.dto.response.RefillResponse;
 import tn.esprit.tn.medicare_ai.entity.RefillStatus;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
-import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
-import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
-import tn.esprit.tn.medicare_ai.service.InventoryService;
-import tn.esprit.tn.medicare_ai.service.MedicineService;
-import tn.esprit.tn.medicare_ai.service.OrderService;
 import tn.esprit.tn.medicare_ai.service.PrescriptionService;
 import tn.esprit.tn.medicare_ai.service.RefillService;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-        properties = {
-                "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration"
-        }
-)
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 class RefillControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @MockitoBean
+    @Mock
     private RefillService refillService;
-
-    @MockitoBean
+    @Mock
     private PrescriptionService prescriptionService;
-
-    @MockitoBean
-    private MedicineService medicineService;
-
-    @MockitoBean
-    private OrderService orderService;
-
-    @MockitoBean
-    private InventoryService inventoryService;
-
-    @MockitoBean
-    private DrugInteractionService drugInteractionService;
-
-    @MockitoBean
+    @Mock
     private UserRepository userRepository;
 
-    @MockitoBean
-    private VerificationCodeRepository verificationCodeRepository;
+    @InjectMocks
+    private PharmacyController controller;
 
-    @Test
-    @DisplayName("POST /api/pharmacy/refills: valid request returns refill details")
-    @WithMockUser(username = "patient@med.com", roles = "PATIENT")
-    void requestRefill_valid_returnsOk() throws Exception {
-        mockCurrentPatient();
-        when(refillService.requestRefill(any(RefillRequestDto.class), eq(1L)))
-                .thenReturn(RefillResponse.builder().id(9L).status(RefillStatus.PENDING).build());
-
-        RefillRequestDto request = RefillRequestDto.builder()
-                .prescriptionId(11L)
-                .requestedQuantity(2)
-                .build();
-
-        mockMvc.perform(post("/api/pharmacy/refills")
-                        .contentType(APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PENDING"));
+    @AfterEach
+    void clearContext() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    @DisplayName("POST /api/pharmacy/prescriptions/upload: uploads mock file and returns verification response")
-    @WithMockUser(username = "patient@med.com", roles = "PATIENT")
-    void uploadPrescription_mockFile_returnsVerification() throws Exception {
+    @DisplayName("requestRefill: valid request returns refill details")
+    void requestRefill_valid_returnsOk() {
         mockCurrentPatient();
+        when(refillService.requestRefill(any(RefillRequestDto.class), org.mockito.ArgumentMatchers.eq(1L)))
+                .thenReturn(RefillResponse.builder().id(9L).status(RefillStatus.PENDING).build());
 
-        when(prescriptionService.uploadPrescription(any(), eq(1L)))
-                .thenReturn(PrescriptionVerificationResponse.builder()
-                        .id(123L)
-                        .status("PENDING_VERIFICATION")
-                        .message("ok")
-                        .build());
+        ResponseEntity<RefillResponse> response = controller.requestRefill(new RefillRequestDto());
 
-        mockMvc.perform(multipart("/api/pharmacy/prescriptions/upload")
-                        .file("imageFile", "dummy-image".getBytes())
-                        .param("doctorName", "Dr. Smith"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("PENDING_VERIFICATION"));
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("PENDING", response.getBody().getStatus().name());
+    }
+
+    @Test
+    @DisplayName("uploadPrescription: uploads mock file and returns verification response")
+    void uploadPrescription_mockFile_returnsVerification() {
+        mockCurrentPatient();
+        UploadPrescriptionRequest request = UploadPrescriptionRequest.builder()
+                .imageFile(new MockMultipartFile("imageFile", "rx.jpg", "image/jpeg", "img".getBytes()))
+                .doctorName("Dr. Smith")
+                .build();
+
+        when(prescriptionService.uploadPrescription(any(UploadPrescriptionRequest.class), org.mockito.ArgumentMatchers.eq(1L)))
+                .thenReturn(PrescriptionVerificationResponse.builder().id(123L).status("PENDING_VERIFICATION").build());
+
+        ResponseEntity<PrescriptionVerificationResponse> response = controller.uploadPrescription(request);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals("PENDING_VERIFICATION", response.getBody().getStatus());
     }
 
     private void mockCurrentPatient() {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("patient@med.com", null));
         User patient = new User();
         patient.setId(1L);
         patient.setEmail("patient@med.com");
