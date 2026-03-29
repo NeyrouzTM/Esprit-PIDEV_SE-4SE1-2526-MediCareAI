@@ -1,0 +1,547 @@
+name: Backend CI/CD Pipeline - Medicare AI
+# No-op update to trigger CI when needed.
+
+on:
+  push:
+    branches: [ main, develop, release/** ]
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/backend-ci-cd.yml'
+      - 'Dockerfile'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  JAVA_VERSION: '17'
+
+jobs:
+  # ===== STAGE 1: CODE ANALYSIS & VALIDATION =====
+  validate:
+    name: Code Validation
+    runs-on: ubuntu-latest
+    outputs:
+      build-version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Build Version: $VERSION"
+
+      - name: Validate Maven configuration
+        run: mvn validate
+
+      - name: Check code style
+        run: mvn checkstyle:check || echo "⚠️ Code style issues found (non-blocking)"
+
+      - name: Check pom.xml structure
+        run: mvn help:describe
+
+  # ===== STAGE 2: BUILD & UNIT TESTS =====
+  build-and-test:
+    name: Build & Unit Tests
+    needs: validate
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-path: target/Medicare_Ai-${{ needs.validate.outputs.build-version }}.jar
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests=true -B -V
+
+      - name: Run Unit Tests
+        run: mvn test -B
+
+      - name: Generate Test Report
+        if: always()
+        run: mvn surefire-report:report
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: target/surefire-reports/
+
+      - name: Upload coverage to Codecov
+        if: success()
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./target/site/jacoco/jacoco.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifact
+          path: target/*.jar
+          retention-days: 5
+
+  # ===== STAGE 3: DEPENDENCY & SECURITY SCANNING =====
+  security-scan:
+    name: Security Analysis
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+            -Dformat=JSON \
+            -Dformat=XML \
+            || echo "⚠️ Security vulnerabilities detected"
+
+      - name: Upload dependency check results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: target/dependency-check-report.*
+
+      - name: Check for CVEs
+        run: |
+          if [ -f "target/dependency-check-report.json" ]; then
+            CRITICAL=$(grep -c "\"severity\": \"CRITICAL\"" target/dependency-check-report.json || echo "0")
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "❌ CRITICAL vulnerabilities found!"
+              exit 1
+            fi
+          fi
+
+      - name: Run SpotBugs (Bug Detection)
+        run: mvn spotbugs:check -B || echo "⚠️ Potential bugs found"
+
+      - name: Upload SpotBugs results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: spotbugs-report
+          path: target/spotbugsXml.xml
+
+  # ===== STAGE 4: CODE QUALITY ANALYSIS =====
+  quality-analysis:
+    name: Code Quality (SonarQube)
+    needs: [ validate, build-and-test ]
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifact
+
+      - name: Cache SonarQube packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+
+      - name: Run SonarQube Analysis
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_LOGIN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -n "$SONAR_HOST_URL" ] && [ -n "$SONAR_LOGIN" ]; then
+            mvn verify sonar:sonar \
+              -Dsonar.projectKey=Medicare_Ai \
+              -Dsonar.host.url=$SONAR_HOST_URL \
+              -Dsonar.login=$SONAR_LOGIN \
+              -Dsonar.exclusions="**/*Test.java" \
+              -Dsonar.coverage.exclusions="**/*Test.java"
+          else
+            echo "⚠️ SonarQube configuration not provided (optional)"
+          fi
+
+  # ===== STAGE 5: DOCKER BUILD & PUSH =====
+  docker-build:
+    name: Docker Build & Push
+    needs: [ build-and-test, security-scan ]
+    runs-on: ubuntu-latest
+    if: success() && (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'))
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_VERSION=${{ needs.validate.outputs.build-version }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            VCS_REF=${{ github.sha }}
+
+  # ===== STAGE 6: INTEGRATION TESTS =====
+  integration-tests:
+    name: Integration Tests
+    needs: docker-build
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: medicare_ai_test
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 3306:3306
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot 2>/dev/null; then
+              echo "MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Run Integration Tests
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/medicare_ai_test
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: root
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+        run: mvn verify -P integration-tests
+
+  # ===== STAGE 7: KUBERNETES DEPLOYMENT =====
+  deploy-staging-k8s:
+    name: Deploy to Kubernetes (Staging)
+    needs: [ docker-build, integration-tests ]
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging-api.medicare-ai.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubeconfig
+        env:
+          KUBECONFIG_DATA: ${{ secrets.STAGING_KUBECONFIG }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          kubectl cluster-info
+
+      - name: Update image in deployment
+        env:
+          IMAGE_TAG: ${{ needs.docker-build.outputs.image-tag }}
+        run: |
+          # Update image in deployment.yaml
+          sed -i "s|image: ghcr.io/.*/.*:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG##*:}|g" k8s/deployment.yaml
+
+      - name: Deploy to Kubernetes Cluster
+        run: |
+          # Create namespace if not exists
+          kubectl create namespace medicare-ai --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Deploy application
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/mysql.yaml
+          kubectl apply -f k8s/redis.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/ingress-rbac.yaml
+          
+          # Wait for deployment
+          kubectl rollout status deployment/medicare-ai -n medicare-ai --timeout=600s
+
+      - name: Verify Deployment
+        run: |
+          echo "Checking deployment status..."
+          kubectl get pods -n medicare-ai
+          kubectl get svc -n medicare-ai
+          
+          # Check pod health
+          POD=$(kubectl get pod -n medicare-ai -l app=medicare-ai -o jsonpath='{.items[0].metadata.name}')
+          if [ -n "$POD" ]; then
+            kubectl exec -n medicare-ai $POD -- curl -f http://localhost:8080/actuator/health || exit 1
+          fi
+
+      - name: Run Smoke Tests (Kubernetes)
+        run: |
+          bash scripts/k8s-health-check.sh
+
+  deploy-production-k8s:
+    name: Deploy to Kubernetes (Production)
+    needs: [ docker-build, integration-tests ]
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://api.medicare-ai.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubeconfig
+        env:
+          KUBECONFIG_DATA: ${{ secrets.PROD_KUBECONFIG }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG_DATA" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          kubectl cluster-info
+
+      - name: Update image in deployment
+        env:
+          IMAGE_TAG: ${{ needs.docker-build.outputs.image-tag }}
+        run: |
+          sed -i "s|image: ghcr.io/.*/.*:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG##*:}|g" k8s/deployment.yaml
+
+      - name: Pre-deployment Checks
+        run: |
+          echo "Running pre-deployment checks..."
+          kubectl get nodes
+          kubectl get namespaces
+          kubectl get pvc -n medicare-ai 2>/dev/null || echo "Namespace not yet created"
+
+      - name: Deploy to Production Kubernetes Cluster
+        run: |
+          # Create namespace if not exists
+          kubectl create namespace medicare-ai --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Deploy application
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/mysql.yaml
+          kubectl apply -f k8s/redis.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/ingress-rbac.yaml
+          kubectl apply -f k8s/monitoring.yaml
+          
+          # Wait for deployment
+          kubectl rollout status deployment/medicare-ai -n medicare-ai --timeout=600s
+
+      - name: Post-deployment Verification
+        run: |
+          echo "Verifying production deployment..."
+          kubectl get pods -n medicare-ai
+          kubectl get svc -n medicare-ai
+          kubectl get ingress -n medicare-ai
+          
+          # Health check
+          POD=$(kubectl get pod -n medicare-ai -l app=medicare-ai -o jsonpath='{.items[0].metadata.name}')
+          if [ -n "$POD" ]; then
+            for i in {1..30}; do
+              if kubectl exec -n medicare-ai $POD -- curl -f http://localhost:8080/actuator/health 2>/dev/null; then
+                echo "✓ Application health check passed"
+                exit 0
+              fi
+              echo "Waiting for application to be ready... ($i/30)"
+              sleep 2
+            done
+            exit 1
+          fi
+
+      - name: Run Production Smoke Tests
+        run: |
+          bash scripts/k8s-health-check.sh
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: release-${{ github.sha }}
+          release_name: Production Release ${{ github.sha }}
+          body: |
+            ## Production Deployment
+            - **Image**: ${{ needs.docker-build.outputs.image-tag }}
+            - **Deployment Type**: Kubernetes (KubeAdm)
+            - **Environment**: Production
+            - **Commit**: ${{ github.sha }}
+            - **Branch**: ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+  # ===== STAGE 8: NOTIFICATIONS =====
+  notify:
+    name: Notify Status
+    needs: [ validate, build-and-test, security-scan, quality-analysis, docker-build, integration-tests ]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [ "${{ needs.validate.result }}" = "failure" ] || \
+             [ "${{ needs.build-and-test.result }}" = "failure" ] || \
+             [ "${{ needs.security-scan.result }}" = "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "❌ Medicare AI Backend Pipeline Failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Pipeline Status: FAILURE*\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref }}\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+
+      - name: Send success notification
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "✅ Medicare AI Backend Pipeline Successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Pipeline Status: SUCCESS*\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref }}\nCommit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+
