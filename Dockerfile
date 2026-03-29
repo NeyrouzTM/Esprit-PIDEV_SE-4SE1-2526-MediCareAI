@@ -1,5 +1,5 @@
 # Stage 1: Build stage
-FROM maven:3.9.6-openjdk-17 as builder
+FROM maven:3.9.11-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # Stage 2: Runtime stage
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jre-jammy
 
 # Install curl for healthchecks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -41,4 +41,3 @@ ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxRAMPercentage=75.0 -XX:+HeapDumpOnOutOfMemory
 
 # Run application
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar app.jar"]
-
