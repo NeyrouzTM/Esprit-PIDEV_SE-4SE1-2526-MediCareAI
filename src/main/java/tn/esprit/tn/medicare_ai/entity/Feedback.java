@@ -40,6 +40,7 @@ public class Feedback {
     private int rating;
 
     @Column(nullable = false)
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToOne
