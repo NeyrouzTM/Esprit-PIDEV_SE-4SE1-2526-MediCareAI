@@ -72,7 +72,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: medicare-ai
-          image: ghcr.io/your-org/medicare-ai:latest
+          image: brahemahmed/medicare-ai:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
