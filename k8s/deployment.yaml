@@ -73,7 +73,7 @@ spec:
       containers:
         - name: medicare-ai
           image: brahemahmed/medicare-ai:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
               name: http
