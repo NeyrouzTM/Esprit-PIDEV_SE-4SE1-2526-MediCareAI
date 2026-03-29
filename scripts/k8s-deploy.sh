@@ -8,8 +8,8 @@ set -e
 # Configuration
 NAMESPACE="medicare-ai"
 KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
-DOCKER_REGISTRY="${DOCKER_REGISTRY:-ghcr.io}"
-DOCKER_IMAGE="${DOCKER_IMAGE:-your-org/medicare-ai}"
+DOCKER_REGISTRY="${DOCKER_REGISTRY:-docker.io}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-brahemahmed/medicare-ai}"
 IMAGE_TAG="${1:-latest}"
 
 # Colors for output
@@ -81,7 +81,7 @@ update_image() {
     log "Updating Docker image to: $DOCKER_REGISTRY/$DOCKER_IMAGE:$IMAGE_TAG"
 
     # Update the image in deployment.yaml
-    sed -i.bak "s|image: ghcr.io/.*/.*:.*|image: $DOCKER_REGISTRY/$DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
+    sed -i.bak "s|image: .*medicare-ai:.*|image: $DOCKER_REGISTRY/$DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
 
     info "✓ Image updated to: $DOCKER_REGISTRY/$DOCKER_IMAGE:$IMAGE_TAG"
 }
