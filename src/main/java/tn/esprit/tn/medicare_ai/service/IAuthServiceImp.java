@@ -8,10 +8,15 @@ import org.springframework.stereotype.Service;
 import tn.esprit.tn.medicare_ai.dto.AuthResponse;
 import tn.esprit.tn.medicare_ai.dto.LoginRequest;
 import tn.esprit.tn.medicare_ai.dto.RegisterRequest;
+import tn.esprit.tn.medicare_ai.dto.UserResponse;
+import tn.esprit.tn.medicare_ai.dto.UserUpdateRequest;
 import tn.esprit.tn.medicare_ai.entity.User;
+import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.security.CustomUserDetailsService;
 import tn.esprit.tn.medicare_ai.security.jwt.JwtService;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -69,5 +74,71 @@ public class IAuthServiceImp implements IAuthService {
                 .getAuthority();
 
         return new AuthResponse(token, userDetails.getUsername(), role);
+    }
+
+    @Override
+    public List<UserResponse> getUsers() {
+        return userRepository.findAll().stream()
+                .map(this::toUserResponse)
+                .toList();
+    }
+
+    @Override
+    public UserResponse getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        return toUserResponse(user);
+    }
+
+    @Override
+    public UserResponse updateUser(Long id, UserUpdateRequest req) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        if (req.fullName() != null && !req.fullName().isBlank()) {
+            user.setFullName(req.fullName());
+        }
+
+        if (req.email() != null && !req.email().isBlank() && !req.email().equalsIgnoreCase(user.getEmail())) {
+            if (userRepository.findByEmail(req.email()).isPresent()) {
+                throw new IllegalArgumentException("Email already used");
+            }
+            user.setEmail(req.email());
+        }
+
+        if (req.password() != null && !req.password().isBlank()) {
+            if (req.password().length() < 6) {
+                throw new IllegalArgumentException("Password must contain at least 6 characters");
+            }
+            user.setPassword(passwordEncoder.encode(req.password()));
+        }
+
+        if (req.role() != null) {
+            user.setRole(req.role());
+        }
+
+        if (req.enabled() != null) {
+            user.setEnabled(req.enabled());
+        }
+
+        return toUserResponse(userRepository.save(user));
+    }
+
+    @Override
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResourceNotFoundException("User not found with id: " + id);
+        }
+        userRepository.deleteById(id);
+    }
+
+    private UserResponse toUserResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole(),
+                user.isEnabled()
+        );
     }
 }
