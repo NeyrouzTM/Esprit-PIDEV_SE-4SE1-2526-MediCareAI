@@ -53,6 +53,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
+      affinity: {}
       containers:
         - name: medicare-ai
           image: brahemahmed/medicare-ai:latest
