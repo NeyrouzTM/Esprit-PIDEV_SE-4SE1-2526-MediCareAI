@@ -10,7 +10,7 @@ metadata:
   annotations:
     description: "Medicare AI Backend API Service"
 spec:
-  type: LoadBalancer
+  type: NodePort
   sessionAffinity: ClientIP
   sessionAffinityConfig:
     clientIP:
@@ -20,10 +20,7 @@ spec:
       targetPort: 8080
       protocol: TCP
       name: http
-    - port: 443
-      targetPort: 8080
-      protocol: TCP
-      name: https
+      nodePort: 30080
   selector:
     app: medicare-ai
 
@@ -38,12 +35,10 @@ metadata:
     app: medicare-ai
     version: v1
 spec:
-  replicas: 3
+  replicas: 1
+  progressDeadlineSeconds: 1200
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
+    type: Recreate
   selector:
     matchLabels:
       app: medicare-ai
@@ -58,18 +53,7 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                labelSelector:
-                  matchExpressions:
-                    - key: app
-                      operator: In
-                      values:
-                        - medicare-ai
-                topologyKey: kubernetes.io/hostname
+      affinity: {}
       containers:
         - name: medicare-ai
           image: brahemahmed/medicare-ai:latest
@@ -100,9 +84,9 @@ spec:
                   name: medicare-ai-secrets
                   key: db-password
             - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
-              value: "20"
-            - name: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
               value: "10"
+            - name: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
+              value: "5"
 
             # Redis Configuration
             - name: SPRING_REDIS_HOST
@@ -146,9 +130,9 @@ spec:
                   name: medicare-ai-secrets
                   key: mail-password
 
-            # JVM Configuration
+            # JVM Configuration — optimized for single node
             - name: JAVA_OPTS
-              value: "-XX:+UseG1GC -XX:MaxRAMPercentage=75.0 -XX:+HeapDumpOnOutOfMemoryError"
+              value: "-XX:+UseG1GC -XX:MaxRAMPercentage=75.0 -XX:+HeapDumpOnOutOfMemoryError -Xmx768m"
 
             # Kubernetes-specific configuration
             - name: HOSTNAME
@@ -170,37 +154,40 @@ spec:
               cpu: "250m"
             limits:
               memory: "1Gi"
-              cpu: "500m"
+              cpu: "1000m"
 
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-              scheme: HTTP
-            initialDelaySeconds: 60
-            periodSeconds: 15
-            timeoutSeconds: 5
-            failureThreshold: 3
-
-          readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8080
-              scheme: HTTP
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 2
-
+          # Startup probe — app uses server.servlet.context-path=/api in k8s profile
           startupProbe:
             httpGet:
-              path: /actuator/health
+              path: /api/actuator/health
               port: 8080
               scheme: HTTP
-            initialDelaySeconds: 10
+            initialDelaySeconds: 45
             periodSeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 12
+            timeoutSeconds: 10
+            failureThreshold: 40
+
+          # Liveness probe — only runs after startup probe passes
+          livenessProbe:
+            httpGet:
+              path: /api/actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+
+          # Readiness probe — controls when traffic is sent
+          readinessProbe:
+            httpGet:
+              path: /api/actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
 
           securityContext:
             allowPrivilegeEscalation: false
@@ -239,7 +226,7 @@ spec:
       restartPolicy: Always
 
 ---
-# HorizontalPodAutoscaler for Medicare AI
+# HorizontalPodAutoscaler — disabled for single node (minReplicas: 1)
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -250,8 +237,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: medicare-ai
-  minReplicas: 3
-  maxReplicas: 10
+  minReplicas: 1
+  maxReplicas: 3
   metrics:
     - type: Resource
       resource:
@@ -265,34 +252,16 @@ spec:
         target:
           type: Utilization
           averageUtilization: 80
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-        - type: Percent
-          value: 50
-          periodSeconds: 60
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      policies:
-        - type: Percent
-          value: 100
-          periodSeconds: 30
-        - type: Pods
-          value: 2
-          periodSeconds: 60
-      selectPolicy: Max
 
 ---
-# PodDisruptionBudget for high availability
+# PodDisruptionBudget — fixed for single node
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: medicare-ai-pdb
   namespace: medicare-ai
 spec:
-  minAvailable: 2
+  minAvailable: 0
   selector:
     matchLabels:
       app: medicare-ai
-
