@@ -59,6 +59,13 @@ public class IAuthServiceImp implements IAuthService {
 
     @Override
     public AuthResponse login(LoginRequest req) {
+        if (req == null || req.email() == null || req.email().isBlank()) {
+            throw new IllegalArgumentException("Email required");
+        }
+        if (req.password() == null || req.password().isBlank()) {
+            throw new IllegalArgumentException("Password required");
+        }
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         req.email(), req.password())

@@ -44,18 +44,18 @@ public class OpenApiConfig {
     }
 
     @Bean
-    public GroupedOpenApi pharmacyApi() {
+    public GroupedOpenApi authApi() {
         return GroupedOpenApi.builder()
-                .group("e-pharmacy")
-                .pathsToMatch("/api/pharmacy/**", "/auth/**")
+                .group("authentication")
+                .pathsToMatch("/auth/**")
                 .build();
     }
 
     @Bean
-    public GroupedOpenApi usersApi() {
+    public GroupedOpenApi pharmacyApi() {
         return GroupedOpenApi.builder()
-                .group("users")
-                .pathsToMatch("/auth/users/**")
+                .group("e-pharmacy")
+                .pathsToMatch("/api/pharmacy/**")
                 .build();
     }
 }

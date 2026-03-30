@@ -49,7 +49,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("GET /auth/users/doctors returns doctors")
+    @DisplayName("GET /auth/doctors returns doctors")
     void getDoctors_returnsPage() throws Exception {
         var doctors = new PageImpl<>(
                 List.of(new UserResponse(2L, "Dr Strange", "doc@med.com", Role.DOCTOR, true)),
@@ -59,7 +59,7 @@ class AuthControllerTest {
 
         when(authService.getDoctors(eq("strange"), any())).thenReturn(doctors);
 
-        mockMvc.perform(get("/auth/users/doctors").param("query", "strange"))
+        mockMvc.perform(get("/auth/doctors").param("query", "strange"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].role").value("DOCTOR"))
                 .andExpect(jsonPath("$.content[0].fullName").value("Dr Strange"));
@@ -101,4 +101,3 @@ class AuthControllerTest {
                 .andExpect(status().isNoContent());
     }
 }
-
