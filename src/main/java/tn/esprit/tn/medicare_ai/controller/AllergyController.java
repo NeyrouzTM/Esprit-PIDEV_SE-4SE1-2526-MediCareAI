@@ -22,7 +22,7 @@ public class AllergyController {
     private final UserRepository userRepository;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR')")
     public ResponseEntity<?> create(@RequestBody AllergyDTO dto) {
         return ResponseEntity.ok(allergyService.create(dto, getCurrentUserId(), getCurrentUserRole()));
     }

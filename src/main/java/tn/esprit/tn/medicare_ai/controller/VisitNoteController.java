@@ -22,7 +22,7 @@ public class VisitNoteController {
     private final UserRepository userRepository;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR')")
     public ResponseEntity<?> create(@RequestBody VisitNoteDTO dto) {
         return ResponseEntity.ok(visitNoteService.create(dto, getCurrentUserId(), getCurrentUserRole()));
     }

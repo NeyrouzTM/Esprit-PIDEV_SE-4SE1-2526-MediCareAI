@@ -22,7 +22,7 @@ public class MedicalImageController {
     private final UserRepository userRepository;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR')")
     public ResponseEntity<?> create(@RequestBody MedicalImageDTO dto) {
         return ResponseEntity.ok(medicalImageService.create(dto, getCurrentUserId(), getCurrentUserRole()));
     }

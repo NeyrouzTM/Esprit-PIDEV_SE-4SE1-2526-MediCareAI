@@ -22,7 +22,7 @@ public class LabResultController {
     private final UserRepository userRepository;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','DOCTOR')")
     public ResponseEntity<?> create(@RequestBody LabResultDTO dto) {
         return ResponseEntity.ok(labResultService.create(dto, getCurrentUserId(), getCurrentUserRole()));
     }
