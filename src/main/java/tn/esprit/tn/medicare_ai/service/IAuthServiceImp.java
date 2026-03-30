@@ -1,5 +1,8 @@
 package tn.esprit.tn.medicare_ai.service;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,13 +13,12 @@ import tn.esprit.tn.medicare_ai.dto.LoginRequest;
 import tn.esprit.tn.medicare_ai.dto.RegisterRequest;
 import tn.esprit.tn.medicare_ai.dto.UserResponse;
 import tn.esprit.tn.medicare_ai.dto.UserUpdateRequest;
+import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.security.CustomUserDetailsService;
 import tn.esprit.tn.medicare_ai.security.jwt.JwtService;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -77,10 +79,15 @@ public class IAuthServiceImp implements IAuthService {
     }
 
     @Override
-    public List<UserResponse> getUsers() {
-        return userRepository.findAll().stream()
-                .map(this::toUserResponse)
-                .toList();
+    public Page<UserResponse> getUsers(String query, Role role, Pageable pageable) {
+        return userRepository.searchUsers(role, normalize(query), pageable)
+                .map(this::toUserResponse);
+    }
+
+    @Override
+    public Page<UserResponse> getDoctors(String query, Pageable pageable) {
+        return userRepository.searchUsers(Role.DOCTOR, normalize(query), pageable)
+                .map(this::toUserResponse);
     }
 
     @Override
@@ -100,7 +107,8 @@ public class IAuthServiceImp implements IAuthService {
         }
 
         if (req.email() != null && !req.email().isBlank() && !req.email().equalsIgnoreCase(user.getEmail())) {
-            if (userRepository.findByEmail(req.email()).isPresent()) {
+            User existing = userRepository.findByEmail(req.email()).orElse(null);
+            if (existing != null && !existing.getId().equals(user.getId())) {
                 throw new IllegalArgumentException("Email already used");
             }
             user.setEmail(req.email());
@@ -126,10 +134,16 @@ public class IAuthServiceImp implements IAuthService {
 
     @Override
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User not found with id: " + id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        userRepository.delete(user);
+    }
+
+    private String normalize(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
         }
-        userRepository.deleteById(id);
+        return value.trim();
     }
 
     private UserResponse toUserResponse(User user) {

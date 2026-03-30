@@ -8,6 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tn.esprit.tn.medicare_ai.dto.UserResponse;
@@ -32,7 +34,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest {
 
     private MockMvc mockMvc;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private IAuthService authService;
@@ -40,44 +41,51 @@ class AuthControllerTest {
     @InjectMocks
     private AuthController authController;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
     }
 
     @Test
-    @DisplayName("GET /auth/users returns list")
-    void getUsers_returnsOk() throws Exception {
-        when(authService.getUsers()).thenReturn(List.of(
-                new UserResponse(1L, "Admin", "admin@med.com", Role.ADMIN, true)
-        ));
+    @DisplayName("GET /auth/users/doctors returns doctors")
+    void getDoctors_returnsPage() throws Exception {
+        var doctors = new PageImpl<>(
+                List.of(new UserResponse(2L, "Dr Strange", "doc@med.com", Role.DOCTOR, true)),
+                PageRequest.of(0, 20),
+                1
+        );
 
-        mockMvc.perform(get("/auth/users"))
+        when(authService.getDoctors(eq("strange"), any())).thenReturn(doctors);
+
+        mockMvc.perform(get("/auth/users/doctors").param("query", "strange"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].email").value("admin@med.com"));
+                .andExpect(jsonPath("$.content[0].role").value("DOCTOR"))
+                .andExpect(jsonPath("$.content[0].fullName").value("Dr Strange"));
     }
 
     @Test
-    @DisplayName("GET /auth/users/{id} returns user details")
-    void getUserById_returnsOk() throws Exception {
-        when(authService.getUserById(3L))
-                .thenReturn(new UserResponse(3L, "Doctor", "doctor@med.com", Role.DOCTOR, true));
+    @DisplayName("GET /auth/users/{id} returns user")
+    void getUserById_returnsUser() throws Exception {
+        when(authService.getUserById(5L))
+                .thenReturn(new UserResponse(5L, "John", "john@med.com", Role.PATIENT, true));
 
-        mockMvc.perform(get("/auth/users/3"))
+        mockMvc.perform(get("/auth/users/5"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(3))
-                .andExpect(jsonPath("$.email").value("doctor@med.com"));
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.email").value("john@med.com"));
     }
 
     @Test
     @DisplayName("PUT /auth/users/{id} updates user")
-    void updateUser_returnsOk() throws Exception {
-        UserUpdateRequest req = new UserUpdateRequest("Updated", "updated@med.com", null, Role.PATIENT, true);
+    void updateUser_returnsUpdated() throws Exception {
+        UserUpdateRequest req = new UserUpdateRequest("Updated", null, null, null, true);
 
-        when(authService.updateUser(eq(4L), any(UserUpdateRequest.class)))
-                .thenReturn(new UserResponse(4L, "Updated", "updated@med.com", Role.PATIENT, true));
+        when(authService.updateUser(eq(5L), any(UserUpdateRequest.class)))
+                .thenReturn(new UserResponse(5L, "Updated", "john@med.com", Role.PATIENT, true));
 
-        mockMvc.perform(put("/auth/users/4")
+        mockMvc.perform(put("/auth/users/5")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -87,9 +95,10 @@ class AuthControllerTest {
     @Test
     @DisplayName("DELETE /auth/users/{id} returns no content")
     void deleteUser_returnsNoContent() throws Exception {
-        doNothing().when(authService).deleteUser(6L);
+        doNothing().when(authService).deleteUser(5L);
 
-        mockMvc.perform(delete("/auth/users/6"))
+        mockMvc.perform(delete("/auth/users/5"))
                 .andExpect(status().isNoContent());
     }
 }
+

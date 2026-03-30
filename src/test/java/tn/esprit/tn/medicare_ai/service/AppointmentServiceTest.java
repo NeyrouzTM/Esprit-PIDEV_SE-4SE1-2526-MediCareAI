@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tn.esprit.tn.medicare_ai.dto.AppointmentDTO;
 import tn.esprit.tn.medicare_ai.entity.Appointment;
+import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.repository.AppointmentRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
@@ -37,21 +38,22 @@ class AppointmentServiceTest {
     void create_validDto_setsPending() {
         User patient = new User();
         patient.setId(1L);
+        patient.setRole(Role.PATIENT);
         User doctor = new User();
         doctor.setId(2L);
+        doctor.setRole(Role.DOCTOR);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(patient));
         when(userRepository.findById(2L)).thenReturn(Optional.of(doctor));
         when(appointmentRepository.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         AppointmentDTO dto = AppointmentDTO.builder()
-                .patientId(1L)
                 .doctorId(2L)
                 .appointmentDate(LocalDateTime.now().plusDays(1))
                 .reason("Follow-up")
                 .build();
 
-        Appointment result = appointmentService.create(dto);
+        Appointment result = appointmentService.create(dto, 1L);
 
         assertEquals("PENDING", result.getStatus());
         assertEquals(1L, result.getPatient().getId());
@@ -62,13 +64,11 @@ class AppointmentServiceTest {
     @DisplayName("create: missing appointment date throws")
     void create_missingAppointmentDate_throws() {
         AppointmentDTO dto = AppointmentDTO.builder()
-                .patientId(1L)
                 .doctorId(2L)
                 .build();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> appointmentService.create(dto));
+                () -> appointmentService.create(dto, 1L));
         assertEquals("Appointment date required", ex.getMessage());
     }
 }
-

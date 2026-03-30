@@ -2,13 +2,15 @@ package tn.esprit.tn.medicare_ai.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -17,85 +19,71 @@ import tn.esprit.tn.medicare_ai.dto.LoginRequest;
 import tn.esprit.tn.medicare_ai.dto.RegisterRequest;
 import tn.esprit.tn.medicare_ai.dto.UserResponse;
 import tn.esprit.tn.medicare_ai.dto.UserUpdateRequest;
+import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.service.IAuthService;
-
-import java.util.List;
 
 @RestController
 @CrossOrigin("*")
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication & User Management", description = "Authentication, user registration, login, and CRUD operations for user management (admin only)")
+@Tag(name = "Authentication & Users", description = "Authentication and user directory endpoints")
 public class AuthController {
 
     private final IAuthService authService;
 
     @PostMapping("/register")
-    @Operation(summary = "Register a new user", description = "Create a new user account with email, password, name, and role")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "User registered successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")
-    })
-    public ResponseEntity<?> register(
-            @RequestBody RegisterRequest req) {
+    @Operation(summary = "Register new user")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
         var saved = authService.register(req);
         return ResponseEntity.ok("User created: " + saved.getEmail());
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Login user", description = "Authenticate user with email and password, return JWT token")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Login successful, JWT token returned"),
-            @ApiResponse(responseCode = "401", description = "Invalid credentials")
-    })
-    public ResponseEntity<AuthResponse> login(
-            @RequestBody LoginRequest req) {
+    @Operation(summary = "Login and get JWT token")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest req) {
         return ResponseEntity.ok(authService.login(req));
     }
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "List all users", description = "Retrieve all users in the system (admin only)")
+    @Operation(summary = "Get users with filters", description = "Admin list with optional role and text query")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Users list retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Access denied - admin role required")
+            @ApiResponse(responseCode = "200", description = "Users retrieved"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public ResponseEntity<List<UserResponse>> getUsers() {
-        return ResponseEntity.ok(authService.getUsers());
+    public ResponseEntity<Page<UserResponse>> getUsers(
+            @Parameter(description = "Search by full name or email", in = ParameterIn.QUERY)
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) Role role,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(authService.getUsers(query, role, pageable));
+    }
+
+    @GetMapping("/users/doctors")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Find doctors", description = "Search doctors by name/email")
+    public ResponseEntity<Page<UserResponse>> getDoctors(
+            @RequestParam(required = false) String query,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(authService.getDoctors(query, pageable));
     }
 
     @GetMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Get user by ID", description = "Retrieve a specific user by ID (admin only)")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "User details retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "403", description = "Access denied - admin role required")
-    })
-    public ResponseEntity<UserResponse> getUserById(
-            @PathVariable
-            @Parameter(description = "User ID", example = "1")
-            Long id) {
+    @Operation(summary = "Get user by id")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(authService.getUserById(id));
     }
 
     @PutMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Update user", description = "Update user information (fullName, email, password, role, enabled status) - admin only")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "User updated successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data"),
-            @ApiResponse(responseCode = "403", description = "Access denied - admin role required")
-    })
+    @Operation(summary = "Update user")
     public ResponseEntity<UserResponse> updateUser(
-            @PathVariable
-            @Parameter(description = "User ID", example = "1")
-            Long id,
+            @PathVariable Long id,
             @RequestBody UserUpdateRequest req) {
         return ResponseEntity.ok(authService.updateUser(id, req));
     }
@@ -103,16 +91,8 @@ public class AuthController {
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Delete user", description = "Remove a user from the system (admin only)")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "User deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found"),
-            @ApiResponse(responseCode = "403", description = "Access denied - admin role required")
-    })
-    public ResponseEntity<Void> deleteUser(
-            @PathVariable
-            @Parameter(description = "User ID", example = "1")
-            Long id) {
+    @Operation(summary = "Delete user")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         authService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }

@@ -5,9 +5,9 @@ import tn.esprit.tn.medicare_ai.entity.Allergy;
 import java.util.List;
 
 public interface AllergyService {
-    Allergy create(AllergyDTO dto);
-    Allergy getById(Long id);
-    List<Allergy> getByMedicalRecordId(Long medicalRecordId);
-    Allergy update(Long id, AllergyDTO dto);
-    void delete(Long id);
+    Allergy create(AllergyDTO dto, Long currentUserId, String currentRole);
+    Allergy getById(Long id, Long currentUserId, String currentRole);
+    List<Allergy> getByMedicalRecordId(Long medicalRecordId, Long currentUserId, String currentRole);
+    Allergy update(Long id, AllergyDTO dto, Long currentUserId, String currentRole);
+    void delete(Long id, Long currentUserId, String currentRole);
 }

@@ -6,9 +6,11 @@ import tn.esprit.tn.medicare_ai.dto.VisitNoteDTO;
 import tn.esprit.tn.medicare_ai.entity.MedicalRecord;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.entity.VisitNote;
+import tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException;
 import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.repository.VisitNoteRepository;
+
 import java.util.List;
 
 @Service
@@ -20,7 +22,7 @@ public class VisitNoteServiceImpl implements VisitNoteService {
     private final UserRepository userRepository;
 
     @Override
-    public VisitNote create(VisitNoteDTO dto) {
+    public VisitNote create(VisitNoteDTO dto, Long currentUserId, String currentRole) {
         if (dto.getMedicalRecordId() == null)
             throw new IllegalArgumentException("Medical record ID required");
         if (dto.getDoctorId() == null)
@@ -28,12 +30,12 @@ public class VisitNoteServiceImpl implements VisitNoteService {
 
         MedicalRecord record = medicalRecordRepository
                 .findById(dto.getMedicalRecordId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Medical record not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Medical record not found"));
+
+        ensureCanAccessRecord(record, currentUserId, currentRole);
 
         User doctor = userRepository.findById(dto.getDoctorId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Doctor not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found"));
 
         VisitNote visitNote = VisitNote.builder()
                 .medicalRecord(record)
@@ -50,23 +52,26 @@ public class VisitNoteServiceImpl implements VisitNoteService {
     }
 
     @Override
-    public VisitNote getById(Long id) {
-        return visitNoteRepository.findById(id)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Visit note not found"));
+    public VisitNote getById(Long id, Long currentUserId, String currentRole) {
+        VisitNote visitNote = visitNoteRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Visit note not found"));
+        ensureCanAccessRecord(visitNote.getMedicalRecord(), currentUserId, currentRole);
+        return visitNote;
     }
 
     @Override
-    public List<VisitNote> getByMedicalRecordId(Long medicalRecordId) {
+    public List<VisitNote> getByMedicalRecordId(Long medicalRecordId, Long currentUserId, String currentRole) {
+        MedicalRecord record = medicalRecordRepository.findById(medicalRecordId)
+                .orElseThrow(() -> new IllegalArgumentException("Medical record not found"));
+        ensureCanAccessRecord(record, currentUserId, currentRole);
         return visitNoteRepository.findByMedicalRecordId(medicalRecordId);
     }
 
     @Override
-    public VisitNote update(Long id, VisitNoteDTO dto) {
-        VisitNote visitNote = getById(id);
+    public VisitNote update(Long id, VisitNoteDTO dto, Long currentUserId, String currentRole) {
+        VisitNote visitNote = getById(id, currentUserId, currentRole);
         if (visitNote.isFinalized())
-            throw new IllegalArgumentException(
-                    "Cannot update a finalized visit note");
+            throw new IllegalArgumentException("Cannot update a finalized visit note");
         if (dto.getSubjective() != null)
             visitNote.setSubjective(dto.getSubjective());
         if (dto.getObjective() != null)
@@ -82,11 +87,20 @@ public class VisitNoteServiceImpl implements VisitNoteService {
     }
 
     @Override
-    public void delete(Long id) {
-        VisitNote visitNote = getById(id);
+    public void delete(Long id, Long currentUserId, String currentRole) {
+        VisitNote visitNote = getById(id, currentUserId, currentRole);
         if (visitNote.isFinalized())
-            throw new IllegalArgumentException(
-                    "Cannot delete a finalized visit note");
+            throw new IllegalArgumentException("Cannot delete a finalized visit note");
         visitNoteRepository.delete(visitNote);
+    }
+
+    private void ensureCanAccessRecord(MedicalRecord record, Long currentUserId, String currentRole) {
+        if ("ADMIN".equals(currentRole) || "DOCTOR".equals(currentRole)) {
+            return;
+        }
+        if ("PATIENT".equals(currentRole) && record.getPatient().getId().equals(currentUserId)) {
+            return;
+        }
+        throw new UnauthorizedActionException("You are not allowed to access this visit note data");
     }
 }

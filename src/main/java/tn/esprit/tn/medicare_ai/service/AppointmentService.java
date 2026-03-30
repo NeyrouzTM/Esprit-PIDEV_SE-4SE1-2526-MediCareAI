@@ -5,11 +5,11 @@ import tn.esprit.tn.medicare_ai.entity.Appointment;
 import java.util.List;
 
 public interface AppointmentService {
-    Appointment create(AppointmentDTO dto);
-    Appointment getById(Long id);
-    List<Appointment> getAll();
-    List<Appointment> getByPatientId(Long patientId);
-    List<Appointment> getByDoctorId(Long doctorId);
-    Appointment update(Long id, AppointmentDTO dto);
-    void delete(Long id);
+    Appointment create(AppointmentDTO dto, Long currentUserId);
+    Appointment getById(Long id, Long currentUserId, String currentRole);
+    List<Appointment> getAll(String currentRole, Long currentUserId);
+    List<Appointment> getByPatientId(Long patientId, Long currentUserId, String currentRole);
+    List<Appointment> getByDoctorId(Long doctorId, Long currentUserId, String currentRole);
+    Appointment update(Long id, AppointmentDTO dto, Long currentUserId, String currentRole);
+    void delete(Long id, Long currentUserId, String currentRole);
 }

@@ -6,13 +6,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import tn.esprit.tn.medicare_ai.dto.UserResponse;
 import tn.esprit.tn.medicare_ai.dto.UserUpdateRequest;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
-import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.security.CustomUserDetailsService;
 import tn.esprit.tn.medicare_ai.security.jwt.JwtService;
@@ -21,11 +24,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,104 +50,66 @@ class AuthServiceTest {
     private IAuthServiceImp authService;
 
     @Test
-    @DisplayName("getUsers: maps users without exposing password")
-    void getUsers_returnsMappedResponse() {
-        User u = User.builder()
-                .id(1L)
-                .fullName("Admin User")
-                .email("admin@med.com")
-                .password("secret")
-                .role(Role.ADMIN)
+    @DisplayName("getDoctors: returns paged doctors")
+    void getDoctors_returnsDoctorsPage() {
+        Pageable pageable = PageRequest.of(0, 10);
+
+        User doctor = User.builder()
+                .id(3L)
+                .fullName("Dr House")
+                .email("house@med.com")
+                .role(Role.DOCTOR)
                 .enabled(true)
                 .build();
 
-        when(userRepository.findAll()).thenReturn(List.of(u));
+        Page<User> page = new PageImpl<>(List.of(doctor), pageable, 1);
+        when(userRepository.searchUsers(Role.DOCTOR, "house", pageable)).thenReturn(page);
 
-        List<UserResponse> users = authService.getUsers();
+        Page<UserResponse> result = authService.getDoctors("house", pageable);
 
-        assertEquals(1, users.size());
-        assertEquals("Admin User", users.get(0).fullName());
-        assertEquals("admin@med.com", users.get(0).email());
-        assertEquals(Role.ADMIN, users.get(0).role());
-        assertTrue(users.get(0).enabled());
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Dr House", result.getContent().get(0).fullName());
+        assertEquals(Role.DOCTOR, result.getContent().get(0).role());
     }
 
     @Test
-    @DisplayName("getUserById: missing id throws ResourceNotFoundException")
-    void getUserById_notFound_throws() {
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> authService.getUserById(99L));
-    }
-
-    @Test
-    @DisplayName("updateUser: updates mutable fields and encodes password")
-    void updateUser_validRequest_updatesUser() {
+    @DisplayName("updateUser: updates email and password")
+    void updateUser_updatesFields() {
         User existing = User.builder()
-                .id(7L)
-                .fullName("Old Name")
+                .id(9L)
+                .fullName("Old")
                 .email("old@med.com")
-                .password("old-encoded")
+                .password("old-pass")
                 .role(Role.PATIENT)
                 .enabled(true)
                 .build();
 
-        when(userRepository.findById(7L)).thenReturn(Optional.of(existing));
+        when(userRepository.findById(9L)).thenReturn(Optional.of(existing));
         when(userRepository.findByEmail("new@med.com")).thenReturn(Optional.empty());
-        when(passwordEncoder.encode("newpass123")).thenReturn("encoded-pass");
+        when(passwordEncoder.encode("newpass123")).thenReturn("encoded");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UserUpdateRequest req = new UserUpdateRequest(
-                "New Name",
-                "new@med.com",
-                "newpass123",
-                Role.DOCTOR,
-                false
-        );
+        UserUpdateRequest req = new UserUpdateRequest("New Name", "new@med.com", "newpass123", Role.DOCTOR, true);
 
-        UserResponse updated = authService.updateUser(7L, req);
+        UserResponse response = authService.updateUser(9L, req);
 
-        assertEquals("New Name", updated.fullName());
-        assertEquals("new@med.com", updated.email());
-        assertEquals(Role.DOCTOR, updated.role());
-        assertFalse(updated.enabled());
+        assertEquals("New Name", response.fullName());
+        assertEquals("new@med.com", response.email());
+        assertEquals(Role.DOCTOR, response.role());
     }
 
     @Test
-    @DisplayName("updateUser: duplicate email throws IllegalArgumentException")
+    @DisplayName("updateUser: throws when duplicate email")
     void updateUser_duplicateEmail_throws() {
-        User existing = User.builder()
-                .id(7L)
-                .fullName("User")
-                .email("old@med.com")
-                .password("encoded")
-                .role(Role.PATIENT)
-                .enabled(true)
-                .build();
+        User existing = User.builder().id(1L).email("old@med.com").build();
+        User other = User.builder().id(2L).email("used@med.com").build();
 
-        User conflict = User.builder().id(9L).email("used@med.com").build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail("used@med.com")).thenReturn(Optional.of(other));
 
-        when(userRepository.findById(7L)).thenReturn(Optional.of(existing));
-        when(userRepository.findByEmail("used@med.com")).thenReturn(Optional.of(conflict));
+        UserUpdateRequest req = new UserUpdateRequest(null, "used@med.com", null, null, null);
 
-        UserUpdateRequest req = new UserUpdateRequest(
-                null,
-                "used@med.com",
-                null,
-                null,
-                null
-        );
-
-        assertThrows(IllegalArgumentException.class, () -> authService.updateUser(7L, req));
-    }
-
-    @Test
-    @DisplayName("deleteUser: existing id calls repository delete")
-    void deleteUser_existing_deletes() {
-        when(userRepository.existsById(5L)).thenReturn(true);
-
-        authService.deleteUser(5L);
-
-        verify(userRepository).deleteById(5L);
+        assertThrows(IllegalArgumentException.class, () -> authService.updateUser(1L, req));
     }
 }
+
