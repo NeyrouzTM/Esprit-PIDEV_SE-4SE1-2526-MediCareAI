@@ -1,8 +1,10 @@
 # 🏥 MediCare AI – Intelligent Healthcare Platform
 
-> **Smart Health, Connected Life**
+## Overview
 
-## 📋 Description
+This project was developed as part of the PIDEV – 4th Year 
+Engineering Program at **Esprit School of Engineering** 
+(Academic Year 2025–2026).
 
 MediCare AI is an intelligent healthcare platform that serves 
 as a 24/7 patient companion and professional support tool.
@@ -10,21 +12,44 @@ It uses AI to offer symptom assessment, record management,
 teleconsultations, and clinical collaboration — all within 
 a secure, unified system.
 
----
-
-## 👥 Team Members
-
-| Name | Module |
-|------|--------|
-| Neyrouz Toumi | Medical Records + Appointment |
-| Aya Hajji | Chatbot + Events/Feedback |
-| Samar Manai | Forum + Collaboration |
-| Ahmed Brahem | E-Pharmacy |
-| Omaima Sahli | Health Tracking |
+> **Slogan:** Smart Health, Connected Life
 
 ---
 
-## 🏗️ Project Architecture
+## Features
+
+- ✅ Secure Authentication (JWT + Spring Security)
+- ✅ Role-based Access Control (Patient, Doctor, Pharmacist, Admin)
+- ✅ Medical Records Management
+- ✅ Appointment & Availability Management
+- ✅ Teleconsultation
+- ✅ AI Chatbot Assistant
+- ✅ Professional Collaboration
+- ✅ E-Pharmacy
+- ✅ Health Tracking & Well-being
+- ✅ Community Forum + Subscription
+
+---
+
+## Tech Stack
+
+### Frontend
+- Angular 17
+- TypeScript
+- Bootstrap
+
+### Backend
+- Java 21
+- Spring Boot 3.5.x
+- Spring Security + JWT
+- Spring Data JPA
+- MySQL 8.0
+- Lombok
+- Swagger / OpenAPI
+
+---
+
+## Architecture
 ```
 medicare-ai/
 ├── src/main/java/tn/esprit/tn/medicare_ai/
@@ -41,25 +66,27 @@ medicare-ai/
 
 ---
 
-## 🔧 Technologies
+## Contributors
 
-### Backend
-- Java 21
-- Spring Boot 3.5.x
-- Spring Security + JWT
-- Spring Data JPA
-- MySQL 8.0
-- Lombok
-- Swagger / OpenAPI
-
-### Frontend
-- Angular 17
-- TypeScript
-- Bootstrap
+| Name | Module |
+|------|--------|
+| Neyrouz Toumi | Medical Records + Appointment |
+| Aya Hajji | Chatbot + Events/Feedback |
+| Samar Manai | Forum + Collaboration |
+| Ahmed Brahem | E-Pharmacy |
+| Omaima Sahli | Health Tracking |
 
 ---
 
-## 🚀 Getting Started
+## Academic Context
+
+Developed at **Esprit School of Engineering – Tunisia**
+
+PIDEV – 4th Year | 2025–2026
+
+---
+
+## Getting Started
 
 ### Prerequisites
 - Java 21
@@ -71,7 +98,7 @@ medicare-ai/
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/your-username/Esprit-PIDEV_SE-4SE1-2526-MediCareAI.git
+git clone https://github.com/your-username/Esprit-PIDEV-4SE1-2526-MediCareAI.git
 ```
 
 **2. Configure database**
@@ -93,15 +120,8 @@ http://localhost:8089/MediCareAI/swagger-ui/index.html
 
 ---
 
-## 🔐 Security
+## Acknowledgments
 
-- JWT Authentication
-- Role-based Access Control
-- Roles : PATIENT, DOCTOR, PHARMACIST, ADMIN
-- BCrypt Password Encoding
-
----
-## 📄 License
-
-This project is developed as part of the 
-**PIDEV 2025-2026** program at **ESPRIT School of Engineering**.
+Special thanks to our professors and supervisors at 
+**Esprit School of Engineering** for their guidance 
+throughout this project.
