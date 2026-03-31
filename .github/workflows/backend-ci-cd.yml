@@ -63,14 +63,6 @@ jobs:
 
       - name: Check pom.xml structure
         run: mvn -B help:effective-pom -Doutput=target/effective-pom.xml
-    needs:
-    with:
-    permissions:
-    uses:
-    strategy:
-    if:
-    secrets:
-    concurrency:
 
   # ===== STAGE 2: BUILD & UNIT TESTS =====
   build-and-test:
