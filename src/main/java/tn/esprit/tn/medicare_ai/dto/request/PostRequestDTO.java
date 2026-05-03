@@ -23,5 +23,5 @@ public class PostRequestDTO {
 
     private List<String> tags;
 
-    private boolean isPremiumOnly;
+    private Boolean isPremiumOnly;
 }

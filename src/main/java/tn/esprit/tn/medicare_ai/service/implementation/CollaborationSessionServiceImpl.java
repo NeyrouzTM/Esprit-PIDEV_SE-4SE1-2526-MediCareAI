@@ -87,6 +87,28 @@ public void deleteSession(Long id, Long creatorId) {
 
     sessionRepository.delete(session);
 }
+    @Override
+    @Transactional
+    public void addParticipantByEmail(Long sessionId, String email) {
+
+        CollaborationSession session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("Session non trouvée"));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé"));
+
+        // 🔥 CHECK DB (FIABLE)
+        boolean alreadyExists = sessionRepository
+                .existsByIdAndParticipants_Id(sessionId, user.getId());
+
+        if (alreadyExists) {
+            throw new IllegalArgumentException("Utilisateur déjà participant");
+        }
+
+        session.getParticipants().add(user);
+
+        sessionRepository.save(session);
+    }
 
 private CollaborationSessionResponseDTO mapToResponseDTO(CollaborationSession session) {
     CollaborationSessionResponseDTO dto = new CollaborationSessionResponseDTO();

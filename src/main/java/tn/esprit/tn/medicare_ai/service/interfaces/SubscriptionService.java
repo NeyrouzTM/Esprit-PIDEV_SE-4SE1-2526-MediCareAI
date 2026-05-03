@@ -18,4 +18,6 @@ public interface SubscriptionService {
     void cancelSubscription(Long subscriptionId, Long userId);
 
     void deleteSubscription(Long subscriptionId, Long userId);   // Suppression physique (optionnel)
+
+    boolean hasActiveSubscription(Long userId);
 }

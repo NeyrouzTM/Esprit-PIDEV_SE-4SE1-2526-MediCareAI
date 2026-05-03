@@ -13,4 +13,5 @@ public interface ReplyService {
     ReplyResponseDTO getReplyById(Long id);
     ReplyResponseDTO updateReply(Long id, ReplyRequestDTO dto, Long currentUserId);
     void deleteReply(Long id, Long currentUserId);
+    ReplyResponseDTO toggleLike(Long replyId, Long userId);
 }
