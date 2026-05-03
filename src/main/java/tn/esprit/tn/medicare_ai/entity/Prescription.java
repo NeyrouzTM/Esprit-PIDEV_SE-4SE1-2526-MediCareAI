@@ -27,11 +27,11 @@ public class Prescription {
     private MedicalRecord medicalRecord;
 
     @ManyToOne
-    @JoinColumn(name = "patient_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_prescription_patient"))
+    @JoinColumn(name = "patient_id", foreignKey = @ForeignKey(name = "fk_pres_patient"))
     private User patient;          // role = PATIENT
 
     @ManyToOne
-    @JoinColumn(name = "doctor_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_prescription_doctor"))
+    @JoinColumn(name = "doctor_id", foreignKey = @ForeignKey(name = "fk_pres_doctor"))
     private User doctor;           // role = DOCTOR
 
     @Column(nullable = false)

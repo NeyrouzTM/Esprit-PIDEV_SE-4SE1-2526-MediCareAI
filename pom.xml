@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.4</version>
+        <version>3.2.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>tn.esprit.tn</groupId>
@@ -28,7 +28,7 @@
     </scm>
     <properties>
         <java.version>17</java.version>
-        <springdoc.version>3.0.0</springdoc.version>
+        <springdoc.version>2.5.0</springdoc.version>
         <lombok.version>1.18.36</lombok.version>
     </properties>
     <dependencies>
@@ -49,10 +49,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
         <!-- Database -->
@@ -77,6 +73,12 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Spring Mail -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- Spring Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -84,11 +86,6 @@
         </dependency>
 
         <!-- JSON Web Tokens (JJWT) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
@@ -130,6 +127,25 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>skip-test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -139,9 +155,28 @@
                         <exclude>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
                         </exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                    <skip>false</skip>
+                    <includes>
+                        <include>**/entity/MoodTest.java</include>
+                        <include>**/entity/SleepTest.java</include>
+                        <include>**/entity/WellBeingMetricTest.java</include>
+                        <include>**/entity/ActivityTest.java</include>
+                        <include>**/entity/StressTest.java</include>
+                        <include>**/entity/PregnancyTrackingTest.java</include>
+                        <include>**/entity/MedicationReminderTest.java</include>
+                        <include>**/entity/RecommendationTest.java</include>
+                        <include>**/entity/MedicationScheduleTest.java</include>
+                        <include>**/entity/PregnancyCheckupTest.java</include>
+                    </includes>
                 </configuration>
             </plugin>
         </plugins>

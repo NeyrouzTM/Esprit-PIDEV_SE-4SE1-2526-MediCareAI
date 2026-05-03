@@ -5,7 +5,6 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,6 +27,21 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
     }
 
+    @ExceptionHandler(AiNutritionBadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleAiNutritionBadRequest(AiNutritionBadRequestException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(AiNutritionTimeoutException.class)
+    public ResponseEntity<ErrorResponse> handleAiNutritionTimeout(AiNutritionTimeoutException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.GATEWAY_TIMEOUT, ex.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(AiNutritionServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleAiNutritionUnavailable(AiNutritionServiceUnavailableException ex, HttpServletRequest request) {
+        return buildError(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request.getRequestURI());
+    }
+
     @ExceptionHandler({
             InvalidPrescriptionException.class,
             PrescriptionExpiredException.class,
@@ -41,8 +55,8 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
     }
 
-    @ExceptionHandler({AuthorizationDeniedException.class, AccessDeniedException.class})
-    public ResponseEntity<ErrorResponse> handleAccessDenied(Exception ex, HttpServletRequest request) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(HttpServletRequest request) {
         return buildError(HttpStatus.FORBIDDEN, "Access Denied", request.getRequestURI());
     }
 

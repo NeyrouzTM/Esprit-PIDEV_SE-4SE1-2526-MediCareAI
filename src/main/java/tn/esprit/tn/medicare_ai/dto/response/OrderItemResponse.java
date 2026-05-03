@@ -10,9 +10,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(name = "OrderItemResponse", description = "Line item in an order response.")
+@Schema(name = "OrderItemResponse", description = "Line item in an MedicineOrder response.")
 public class OrderItemResponse {
-    @Schema(description = "Order item identifier.", example = "900")
+    @Schema(description = "MedicineOrder item identifier.", example = "900")
     private Long id;
     @Schema(description = "Medicine identifier.", example = "10")
     private Long medicineId;
@@ -25,3 +25,4 @@ public class OrderItemResponse {
     @Schema(description = "Line subtotal.", example = "17.0")
     private Double subtotal;
 }
+

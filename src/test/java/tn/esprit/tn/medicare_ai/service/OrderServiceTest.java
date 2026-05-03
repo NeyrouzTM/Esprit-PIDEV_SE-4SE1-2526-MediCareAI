@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
-    @Mock private OrderRepository orderRepository;
+    @Mock private MedicineOrderRepository MedicineOrderRepository;
     @Mock private MedicineRepository medicineRepository;
     @Mock private PrescriptionRepository prescriptionRepository;
     @Mock private PrescriptionItemRepository prescriptionItemRepository;
@@ -38,7 +38,7 @@ class OrderServiceTest {
     private OrderService orderService;
 
     @Test
-    @DisplayName("placeOrder: sufficient stock places order, decreases stock, sets pending, calculates total")
+    @DisplayName("placeOrder: sufficient stock places MedicineOrder, decreases stock, sets pending, calculates total")
     void placeOrder_sufficientStock_success() {
         User patient = user(1L, Role.PATIENT);
         Medicine med = medicine(10L, "Amoxicillin", 12.5, false);
@@ -47,8 +47,8 @@ class OrderServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(patient));
         when(medicineRepository.findById(10L)).thenReturn(Optional.of(med));
         when(inventoryRepository.findByMedicineId(10L)).thenReturn(Optional.of(inventory));
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
-            Order o = invocation.getArgument(0);
+        when(MedicineOrderRepository.save(any(MedicineOrder.class))).thenAnswer(invocation -> {
+            MedicineOrder o = invocation.getArgument(0);
             o.setId(100L);
             return o;
         });
@@ -146,4 +146,8 @@ class OrderServiceTest {
         return inventory;
     }
 }
+
+
+
+
 

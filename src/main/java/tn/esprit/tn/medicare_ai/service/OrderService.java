@@ -25,7 +25,7 @@ import java.util.List;
 @Slf4j
 public class OrderService {
 
-    private final OrderRepository orderRepository;
+    private final MedicineOrderRepository MedicineOrderRepository;
     private final MedicineRepository medicineRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final PrescriptionItemRepository prescriptionItemRepository;
@@ -53,12 +53,12 @@ public class OrderService {
         List<Long> medicineIds = request.getItems().stream().map(OrderItemRequest::getMedicineId).toList();
         drugInteractionService.assertNoSevereInteraction(medicineIds);
 
-        Order order = new Order();
-        order.setPatient(patient);
-        order.setPrescription(prescription);
-        order.setOrderDate(LocalDate.now());
-        order.setStatus(OrderStatus.PENDING);
-        order.setShippingAddress(request.getShippingAddress());
+        MedicineOrder MedicineOrder = new MedicineOrder();
+        MedicineOrder.setPatient(patient);
+        MedicineOrder.setPrescription(prescription);
+        MedicineOrder.setOrderDate(LocalDate.now());
+        MedicineOrder.setStatus(OrderStatus.PENDING);
+        MedicineOrder.setShippingAddress(request.getShippingAddress());
 
         List<OrderItem> orderItems = new ArrayList<>();
         double total = 0d;
@@ -85,7 +85,7 @@ public class OrderService {
             }
 
             OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
+            orderItem.setOrder(MedicineOrder);
             orderItem.setMedicine(medicine);
             orderItem.setQuantity(itemRequest.getQuantity());
             orderItem.setUnitPrice(medicine.getPrice());
@@ -98,37 +98,37 @@ public class OrderService {
             total += (medicine.getPrice() != null ? medicine.getPrice() : 0d) * itemRequest.getQuantity();
         }
 
-        order.setItems(orderItems);
-        order.setTotalAmount(total);
-        Order saved = orderRepository.save(order);
+        MedicineOrder.setItems(orderItems);
+        MedicineOrder.setTotalAmount(total);
+        MedicineOrder saved = MedicineOrderRepository.save(MedicineOrder);
         return toOrderDetail(saved);
     }
 
     @Transactional(readOnly = true)
     public OrderDetailResponse getOrderById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
-        return toOrderDetail(order);
+        MedicineOrder MedicineOrder = MedicineOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("MedicineOrder not found: " + id));
+        return toOrderDetail(MedicineOrder);
     }
 
     @Transactional(readOnly = true)
     public Page<OrderResponse> getOrderHistory(Long patientId, Pageable pageable) {
-        return orderRepository.findByPatientIdOrderByOrderDateDesc(patientId, pageable)
+        return MedicineOrderRepository.findByPatientIdOrderByOrderDateDesc(patientId, pageable)
                 .map(this::toOrderSummary);
     }
 
     public OrderDetailResponse cancelOrder(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
+        MedicineOrder MedicineOrder = MedicineOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("MedicineOrder not found: " + id));
 
-        if (!(order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PAID || order.getStatus() == OrderStatus.PROCESSING)) {
-            throw new UnauthorizedActionException("Order cannot be cancelled in current status: " + order.getStatus());
+        if (!(MedicineOrder.getStatus() == OrderStatus.PENDING || MedicineOrder.getStatus() == OrderStatus.PAID || MedicineOrder.getStatus() == OrderStatus.PROCESSING)) {
+            throw new UnauthorizedActionException("MedicineOrder cannot be cancelled in current status: " + MedicineOrder.getStatus());
         }
 
-        order.setStatus(OrderStatus.CANCELLED);
+        MedicineOrder.setStatus(OrderStatus.CANCELLED);
 
-        if (order.getItems() != null) {
-            for (OrderItem item : order.getItems()) {
+        if (MedicineOrder.getItems() != null) {
+            for (OrderItem item : MedicineOrder.getItems()) {
                 if (item.getMedicine() != null) {
                     inventoryRepository.findByMedicineId(item.getMedicine().getId()).ifPresent(inv -> {
                         int current = inv.getStockQuantity() != null ? inv.getStockQuantity() : 0;
@@ -139,50 +139,50 @@ public class OrderService {
             }
         }
 
-        return toOrderDetail(orderRepository.save(order));
+        return toOrderDetail(MedicineOrderRepository.save(MedicineOrder));
     }
 
     public void deleteOrder(Long id, Long patientId) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
+        MedicineOrder MedicineOrder = MedicineOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("MedicineOrder not found: " + id));
 
-        if (order.getPatient() == null || !order.getPatient().getId().equals(patientId)) {
-            throw new UnauthorizedActionException("Order does not belong to current patient");
+        if (MedicineOrder.getPatient() == null || !MedicineOrder.getPatient().getId().equals(patientId)) {
+            throw new UnauthorizedActionException("MedicineOrder does not belong to current patient");
         }
 
-        if (order.getStatus() != OrderStatus.CANCELLED) {
+        if (MedicineOrder.getStatus() != OrderStatus.CANCELLED) {
             throw new UnauthorizedActionException("Only cancelled orders can be deleted");
         }
 
-        orderRepository.delete(order);
+        MedicineOrderRepository.delete(MedicineOrder);
     }
 
-    private OrderResponse toOrderSummary(Order order) {
+    private OrderResponse toOrderSummary(MedicineOrder MedicineOrder) {
         return OrderResponse.builder()
-                .id(order.getId())
-                .orderDate(order.getOrderDate())
-                .totalAmount(order.getTotalAmount())
-                .status(order.getStatus())
-                .trackingNumber(order.getTrackingNumber())
-                .itemCount(order.getItems() != null ? order.getItems().size() : 0)
+                .id(MedicineOrder.getId())
+                .orderDate(MedicineOrder.getOrderDate())
+                .totalAmount(MedicineOrder.getTotalAmount())
+                .status(MedicineOrder.getStatus())
+                .trackingNumber(MedicineOrder.getTrackingNumber())
+                .itemCount(MedicineOrder.getItems() != null ? MedicineOrder.getItems().size() : 0)
                 .build();
     }
 
-    private OrderDetailResponse toOrderDetail(Order order) {
-        List<OrderItemResponse> itemResponses = order.getItems() == null ? List.of() : order.getItems().stream()
+    private OrderDetailResponse toOrderDetail(MedicineOrder MedicineOrder) {
+        List<OrderItemResponse> itemResponses = MedicineOrder.getItems() == null ? List.of() : MedicineOrder.getItems().stream()
                 .map(this::toOrderItem)
                 .toList();
 
         return OrderDetailResponse.orderDetailBuilder()
-                .id(order.getId())
-                .orderDate(order.getOrderDate())
-                .totalAmount(order.getTotalAmount())
-                .status(order.getStatus())
-                .trackingNumber(order.getTrackingNumber())
+                .id(MedicineOrder.getId())
+                .orderDate(MedicineOrder.getOrderDate())
+                .totalAmount(MedicineOrder.getTotalAmount())
+                .status(MedicineOrder.getStatus())
+                .trackingNumber(MedicineOrder.getTrackingNumber())
                 .itemCount(itemResponses.size())
                 .items(itemResponses)
-                .shippingAddress(order.getShippingAddress())
-                .prescriptionId(order.getPrescription() != null ? order.getPrescription().getId() : null)
+                .shippingAddress(MedicineOrder.getShippingAddress())
+                .prescriptionId(MedicineOrder.getPrescription() != null ? MedicineOrder.getPrescription().getId() : null)
                 .build();
     }
 
@@ -197,4 +197,6 @@ public class OrderService {
                 .build();
     }
 }
+
+
 

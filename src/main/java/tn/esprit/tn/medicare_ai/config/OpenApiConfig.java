@@ -111,11 +111,5 @@ public class OpenApiConfig {
     }
 
     // Groupe pour tous les endpoints (optionnel)
-    @Bean
-    public GroupedOpenApi allApi() {
-        return GroupedOpenApi.builder()
-                .group("All Endpoints")
-                .pathsToMatch("/api/**")
-                .build();
-    }
+
 }

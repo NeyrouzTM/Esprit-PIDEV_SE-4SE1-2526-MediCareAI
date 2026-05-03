@@ -60,3 +60,7 @@ class MedicalImageControllerTest {
     }
 }
 
+
+
+
+

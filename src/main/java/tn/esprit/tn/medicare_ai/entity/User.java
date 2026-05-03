@@ -34,6 +34,14 @@ public class User {
     @Builder.Default
     private boolean enabled = true;
 
+    @ManyToMany
+    @JoinTable(
+        name = "user_health_events",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "health_event_id")
+    )
+    private List<HealthEvent> events = new java.util.ArrayList<>();
+
     public boolean isPremium() {
         return isPremium;
     }

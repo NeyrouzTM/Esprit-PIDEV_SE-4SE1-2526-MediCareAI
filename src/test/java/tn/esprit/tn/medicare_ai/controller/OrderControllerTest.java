@@ -5,10 +5,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tn.esprit.tn.medicare_ai.dto.request.OrderItemRequest;
 import tn.esprit.tn.medicare_ai.dto.request.PlaceOrderRequest;
@@ -57,32 +57,32 @@ class OrderControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockitoBean
+    @MockBean
     private OrderService orderService;
 
-    @MockitoBean
+    @MockBean
     private MedicineService medicineService;
 
-    @MockitoBean
+    @MockBean
     private PrescriptionService prescriptionService;
 
-    @MockitoBean
+    @MockBean
     private InventoryService inventoryService;
 
-    @MockitoBean
+    @MockBean
     private DrugInteractionService drugInteractionService;
 
-    @MockitoBean
+    @MockBean
     private RefillService refillService;
 
-    @MockitoBean
+    @MockBean
     private UserRepository userRepository;
 
-    @MockitoBean
+    @MockBean
     private VerificationCodeRepository verificationCodeRepository;
 
     @Test
-    @DisplayName("POST /api/pharmacy/orders: valid order returns 200")
+    @DisplayName("POST /api/pharmacy/orders: valid MedicineOrder returns 200")
     @WithMockUser(username = "patient@med.com", roles = "PATIENT")
     void placeOrder_valid_returnsOk() throws Exception {
         mockCurrentPatient();
@@ -146,7 +146,7 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/pharmacy/orders: returns order history for patient")
+    @DisplayName("GET /api/pharmacy/orders: returns MedicineOrder history for patient")
     @WithMockUser(username = "patient@med.com", roles = "PATIENT")
     void getOrderHistory_returnsOrders() throws Exception {
         mockCurrentPatient();
@@ -159,7 +159,7 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/pharmacy/orders/{id}: order exists returns 200")
+    @DisplayName("GET /api/pharmacy/orders/{id}: MedicineOrder exists returns 200")
     @WithMockUser(username = "patient@med.com", roles = "PATIENT")
     void getOrderById_exists_returns200() throws Exception {
         when(orderService.getOrderById(1L)).thenReturn(OrderDetailResponse.orderDetailBuilder().id(1L).build());
@@ -197,3 +197,8 @@ class OrderControllerTest {
         when(userRepository.findByEmail("patient@med.com")).thenReturn(Optional.of(patient));
     }
 }
+
+
+
+
+

@@ -75,3 +75,5 @@ class MedicalRecordServiceTest {
         assertEquals("Medical record already exists for this patient", ex.getMessage());
     }
 }
+
+

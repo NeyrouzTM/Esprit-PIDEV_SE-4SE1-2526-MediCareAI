@@ -15,9 +15,9 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(name = "OrderDetailResponse", description = "Detailed order response including all line items.")
+@Schema(name = "OrderDetailResponse", description = "Detailed MedicineOrder response including all line items.")
 public class OrderDetailResponse extends OrderResponse {
-    @Schema(description = "Order line items.")
+    @Schema(description = "MedicineOrder line items.")
     private List<OrderItemResponse> items = List.of();
 
     @Schema(description = "Shipping address.", example = "12 Main St, Tunis")
@@ -41,3 +41,4 @@ public class OrderDetailResponse extends OrderResponse {
         this.prescriptionId = prescriptionId;
     }
 }
+

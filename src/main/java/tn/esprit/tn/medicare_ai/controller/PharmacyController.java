@@ -158,10 +158,10 @@ public class PharmacyController {
 
     @PostMapping("/orders")
     @PreAuthorize("hasRole('PATIENT')")
-    @Operation(summary = "Place order", description = "Patient places an order for medicines, optionally linked to a prescription.")
+    @Operation(summary = "Place MedicineOrder", description = "Patient places an MedicineOrder for medicines, optionally linked to a prescription.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Order placed successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid order request", content = @Content(schema = @Schema(implementation = tn.esprit.tn.medicare_ai.exception.ErrorResponse.class))),
+            @ApiResponse(responseCode = "200", description = "MedicineOrder placed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid MedicineOrder request", content = @Content(schema = @Schema(implementation = tn.esprit.tn.medicare_ai.exception.ErrorResponse.class))),
             @ApiResponse(responseCode = "409", description = "Insufficient stock", content = @Content(schema = @Schema(implementation = tn.esprit.tn.medicare_ai.exception.ErrorResponse.class))),
             @ApiResponse(responseCode = "403", description = "Only patients can place orders")
     })
@@ -171,10 +171,10 @@ public class PharmacyController {
 
     @GetMapping("/orders")
     @PreAuthorize("hasRole('PATIENT')")
-    @Operation(summary = "Get order history", description = "Returns paginated order history for the authenticated patient.")
+    @Operation(summary = "Get MedicineOrder history", description = "Returns paginated MedicineOrder history for the authenticated patient.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Order history fetched successfully"),
-            @ApiResponse(responseCode = "403", description = "Only patients can access order history")
+            @ApiResponse(responseCode = "200", description = "MedicineOrder history fetched successfully"),
+            @ApiResponse(responseCode = "403", description = "Only patients can access MedicineOrder history")
     })
     public ResponseEntity<Page<OrderResponse>> getOrderHistory(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(orderService.getOrderHistory(getCurrentUserId(), pageable));
@@ -182,40 +182,40 @@ public class PharmacyController {
 
     @GetMapping("/orders/{id}")
     @PreAuthorize("hasRole('PATIENT')")
-    @Operation(summary = "Get order by id", description = "Returns details for a specific patient order.")
+    @Operation(summary = "Get MedicineOrder by id", description = "Returns details for a specific patient MedicineOrder.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Order fetched successfully"),
-            @ApiResponse(responseCode = "403", description = "Access denied for this order"),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+            @ApiResponse(responseCode = "200", description = "MedicineOrder fetched successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied for this MedicineOrder"),
+            @ApiResponse(responseCode = "404", description = "MedicineOrder not found")
     })
     public ResponseEntity<OrderDetailResponse> getOrderById(
-            @Parameter(description = "Order identifier", example = "200") @PathVariable Long id) {
+            @Parameter(description = "MedicineOrder identifier", example = "200") @PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
     @PostMapping("/orders/{id}/cancel")
     @PreAuthorize("hasRole('PATIENT')")
-    @Operation(summary = "Cancel order", description = "Cancels a patient order when cancellation is allowed by business rules.")
+    @Operation(summary = "Cancel MedicineOrder", description = "Cancels a patient MedicineOrder when cancellation is allowed by business rules.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Order cancelled successfully"),
-            @ApiResponse(responseCode = "400", description = "Order cannot be cancelled"),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+            @ApiResponse(responseCode = "200", description = "MedicineOrder cancelled successfully"),
+            @ApiResponse(responseCode = "400", description = "MedicineOrder cannot be cancelled"),
+            @ApiResponse(responseCode = "404", description = "MedicineOrder not found")
     })
     public ResponseEntity<OrderDetailResponse> cancelOrder(
-            @Parameter(description = "Order identifier", example = "200") @PathVariable Long id) {
+            @Parameter(description = "MedicineOrder identifier", example = "200") @PathVariable Long id) {
         return ResponseEntity.ok(orderService.cancelOrder(id));
     }
 
     @DeleteMapping("/orders/{id}")
     @PreAuthorize("hasRole('PATIENT')")
-    @Operation(summary = "Delete order", description = "Permanently deletes a cancelled order owned by the authenticated patient.")
+    @Operation(summary = "Delete MedicineOrder", description = "Permanently deletes a cancelled MedicineOrder owned by the authenticated patient.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Order deleted successfully"),
-            @ApiResponse(responseCode = "403", description = "Order does not belong to current patient or cannot be deleted"),
-            @ApiResponse(responseCode = "404", description = "Order not found")
+            @ApiResponse(responseCode = "204", description = "MedicineOrder deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "MedicineOrder does not belong to current patient or cannot be deleted"),
+            @ApiResponse(responseCode = "404", description = "MedicineOrder not found")
     })
     public ResponseEntity<Void> deleteOrder(
-            @Parameter(description = "Order identifier", example = "200") @PathVariable Long id) {
+            @Parameter(description = "MedicineOrder identifier", example = "200") @PathVariable Long id) {
         orderService.deleteOrder(id, getCurrentUserId());
         return ResponseEntity.noContent().build();
     }
@@ -326,3 +326,4 @@ public class PharmacyController {
                 .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found"));
     }
 }
+

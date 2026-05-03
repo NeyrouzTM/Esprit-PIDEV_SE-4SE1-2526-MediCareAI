@@ -9,4 +9,5 @@ public interface IWellBeingMetricService {
     List<WellBeingMetricResponse> getByUserId(Long userId);
     WellBeingMetricResponse update(Long id, WellBeingMetricRequest request);
     void delete(Long id);
+    void detectLowWellbeing();
 }

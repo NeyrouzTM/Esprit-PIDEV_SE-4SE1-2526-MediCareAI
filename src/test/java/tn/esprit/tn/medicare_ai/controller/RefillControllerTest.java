@@ -5,9 +5,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tn.esprit.tn.medicare_ai.dto.request.RefillRequestDto;
 import tn.esprit.tn.medicare_ai.dto.response.PrescriptionVerificationResponse;
@@ -49,28 +49,28 @@ class RefillControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockitoBean
+    @MockBean
     private RefillService refillService;
 
-    @MockitoBean
+    @MockBean
     private PrescriptionService prescriptionService;
 
-    @MockitoBean
+    @MockBean
     private MedicineService medicineService;
 
-    @MockitoBean
+    @MockBean
     private OrderService orderService;
 
-    @MockitoBean
+    @MockBean
     private InventoryService inventoryService;
 
-    @MockitoBean
+    @MockBean
     private DrugInteractionService drugInteractionService;
 
-    @MockitoBean
+    @MockBean
     private UserRepository userRepository;
 
-    @MockitoBean
+    @MockBean
     private VerificationCodeRepository verificationCodeRepository;
 
     @Test
@@ -121,3 +121,7 @@ class RefillControllerTest {
         when(userRepository.findByEmail("patient@med.com")).thenReturn(Optional.of(patient));
     }
 }
+
+
+
+

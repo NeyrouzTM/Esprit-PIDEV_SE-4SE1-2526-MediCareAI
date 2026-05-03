@@ -29,7 +29,12 @@ public class Activity {
     @Column(nullable = false, length = 500)
     private String benefit;
 
+    // ✅ FIXED: Changed to nullable = true
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pregnancy_tracking_id", nullable = false)
+    @JoinColumn(name = "pregnancy_tracking_id", nullable = true, foreignKey = @ForeignKey(name = "fk_activity_pregnancy_tracking"))
     private PregnancyTracking pregnancyTracking;
+
+    // Lien inverse avec Alert
+    @OneToOne(mappedBy = "activity")
+    private Alert alert;
 }
