@@ -14,7 +14,7 @@ import tn.esprit.tn.medicare_ai.service.chatbotinterface.DiseaseInterface;
 import java.util.List;
 
 @RestController
-@RequestMapping("/diseases")
+@RequestMapping( "/diseases")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class DiseaseController {

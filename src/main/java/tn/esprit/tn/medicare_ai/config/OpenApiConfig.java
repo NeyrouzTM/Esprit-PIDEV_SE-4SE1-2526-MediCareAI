@@ -50,6 +50,13 @@ public class OpenApiConfig {
                 .build();
     }
     @Bean
+    public GroupedOpenApi dauthApi() {
+        return GroupedOpenApi.builder()
+                .group("auth")
+                .pathsToMatch("/auth/**")
+                .build();
+    }
+    @Bean
     public GroupedOpenApi eventApi() {
         return GroupedOpenApi.builder()
                 .group("events")
@@ -66,8 +73,8 @@ public class OpenApiConfig {
     @Bean
     public GroupedOpenApi symptomApi() {
         return GroupedOpenApi.builder()
-                .group("/symptoms")
-                .pathsToMatch("//symptoms/**")
+                .group("symptoms")
+                .pathsToMatch("/symptoms/**")
                 .build();
     }
 

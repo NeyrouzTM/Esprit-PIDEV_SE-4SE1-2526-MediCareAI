@@ -16,12 +16,8 @@ import tn.esprit.tn.medicare_ai.entity.RefillStatus;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
-import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
-import tn.esprit.tn.medicare_ai.service.InventoryService;
-import tn.esprit.tn.medicare_ai.service.MedicineService;
-import tn.esprit.tn.medicare_ai.service.OrderService;
-import tn.esprit.tn.medicare_ai.service.PrescriptionService;
-import tn.esprit.tn.medicare_ai.service.RefillService;
+import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
+import tn.esprit.tn.medicare_ai.service.*;
 
 import java.util.Optional;
 
@@ -68,6 +64,9 @@ class RefillControllerTest {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private VerificationCodeRepository verificationCodeRepository;
 
     @Test
     @DisplayName("POST /api/pharmacy/refills: valid request returns refill details")
