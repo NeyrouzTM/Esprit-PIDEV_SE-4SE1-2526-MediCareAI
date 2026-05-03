@@ -39,7 +39,7 @@ public class Disease {
     private String treatment;
 
     @ManyToOne
-    @JoinColumn(name = "specialty_id", nullable = false)
+    @JoinColumn(name = "specialty_id")
     private Specialty specialty;
 
     @ManyToMany

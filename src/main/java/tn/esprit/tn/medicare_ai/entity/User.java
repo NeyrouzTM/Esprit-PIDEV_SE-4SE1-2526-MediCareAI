@@ -2,6 +2,7 @@ package tn.esprit.tn.medicare_ai.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,13 +35,14 @@ public class User {
     @Builder.Default
     private boolean enabled = true;
 
+    @Builder.Default
     @ManyToMany
     @JoinTable(
         name = "user_health_events",
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "health_event_id")
     )
-    private List<HealthEvent> events = new java.util.ArrayList<>();
+    private List<HealthEvent> events = new ArrayList<>();
 
     public boolean isPremium() {
         return isPremium;

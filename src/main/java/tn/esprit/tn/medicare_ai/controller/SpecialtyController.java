@@ -14,7 +14,7 @@ import tn.esprit.tn.medicare_ai.service.chatbotinterface.SpecialtyInterface;
 import java.util.List;
 
 @RestController
-@RequestMapping("/specialties")
+@RequestMapping( "/specialties")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class SpecialtyController {

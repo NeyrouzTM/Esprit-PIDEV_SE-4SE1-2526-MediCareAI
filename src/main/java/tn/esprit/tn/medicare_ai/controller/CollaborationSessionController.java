@@ -2,6 +2,7 @@ package tn.esprit.tn.medicare_ai.controller;
 
 
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import tn.esprit.tn.medicare_ai.dto.request.CollaborationSessionRequestDTO;
 import tn.esprit.tn.medicare_ai.dto.response.CollaborationSessionResponseDTO;
 import tn.esprit.tn.medicare_ai.service.interfaces.CollaborationSessionService;
@@ -19,6 +20,15 @@ public class CollaborationSessionController {
 
     public CollaborationSessionController(CollaborationSessionService sessionService) {
         this.sessionService = sessionService;
+    }
+    @PostMapping("/{id}/participants")
+    public ResponseEntity<String> addParticipant(@PathVariable Long id) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        sessionService.addParticipantByEmail(id, email);
+
+        return ResponseEntity.ok("Participant ajouté");
     }
 
     @PostMapping

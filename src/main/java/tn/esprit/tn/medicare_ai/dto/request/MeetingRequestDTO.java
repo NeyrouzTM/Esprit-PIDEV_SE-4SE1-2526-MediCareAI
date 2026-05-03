@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Future;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -22,5 +24,11 @@ public class MeetingRequestDTO {
 
     private String meetingLink;
 
-    private boolean recorded;
+    private Boolean recorded;
+
+    /** IDs des participants à inviter à la création */
+    private Set<Long> participantIds;
+
+    /** Points d'ordre du jour (liste libre) */
+    private List<String> agendaPoints;
 }

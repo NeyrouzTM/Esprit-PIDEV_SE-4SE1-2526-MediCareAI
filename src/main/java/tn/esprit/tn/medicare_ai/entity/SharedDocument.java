@@ -1,6 +1,7 @@
 package tn.esprit.tn.medicare_ai.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,9 +20,11 @@ public class SharedDocument {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Le nom du fichier est obligatoire")
     @Column(nullable = false)
     private String fileName;
 
+    @NotBlank(message = "L'URL du document est obligatoire")
     @Column(nullable = false)
     private String fileUrl;
 

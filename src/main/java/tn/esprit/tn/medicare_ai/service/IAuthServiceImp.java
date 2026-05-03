@@ -15,12 +15,12 @@ import tn.esprit.tn.medicare_ai.dto.LoginRequest;
 import tn.esprit.tn.medicare_ai.dto.RegisterRequest;
 import tn.esprit.tn.medicare_ai.dto.RegisterWithVerificationRequest;
 import tn.esprit.tn.medicare_ai.dto.ResetPasswordRequest;
+import tn.esprit.tn.medicare_ai.dto.UserInfo;
 import tn.esprit.tn.medicare_ai.dto.VerifyEmailRequest;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.entity.VerificationType;
 import tn.esprit.tn.medicare_ai.exception.InvalidVerificationCodeException;
-import tn.esprit.tn.medicare_ai.exception.VerificationCodeExpiredException;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.security.CustomUserDetailsService;
 import tn.esprit.tn.medicare_ai.security.jwt.JwtService;
@@ -83,7 +83,17 @@ public class IAuthServiceImp implements IAuthService {
                         new IllegalStateException("No roles found"))
                 .getAuthority();
 
-        return new AuthResponse(token, userDetails.getUsername(), role);
+        User user = userRepository.findByEmail(req.email())
+                .orElseThrow(() -> new IllegalStateException("User not found after authentication"));
+
+        UserInfo userInfo = new UserInfo(
+                user.getId(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getRole().name()
+        );
+
+        return new AuthResponse(token, role, userDetails.getUsername(), userInfo);
     }
 
     @Override

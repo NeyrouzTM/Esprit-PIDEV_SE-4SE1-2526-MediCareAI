@@ -4,12 +4,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 import tn.esprit.tn.medicare_ai.dto.response.MedicineDetailResponse;
 import tn.esprit.tn.medicare_ai.dto.response.MedicineResponse;
 import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
@@ -27,6 +28,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,11 +43,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration"
         }
 )
-@AutoConfigureMockMvc
 @WithMockUser(username = "patient@med.com", roles = "PATIENT")
 class MedicineControllerTest {
 
     @Autowired
+    private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
     @MockBean
@@ -72,10 +74,26 @@ class MedicineControllerTest {
     @MockBean
     private VerificationCodeRepository verificationCodeRepository;
 
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() throws Exception {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .apply(springSecurity())
+                .build();
+    }
+
     @Test
     @DisplayName("GET /api/pharmacy/medicines: valid search returns 200 with content")
     void searchMedicines_validSearch_returnsPage() throws Exception {
-        MedicineResponse med = MedicineResponse.builder().id(1L).name("Paracetamol").build();
+        MedicineResponse med = MedicineResponse.builder()
+                .id(1L)
+                .name("Paracetamol")
+                .genericName("Paracetamol")
+                .dosageForm("Tablet")
+                .strength("500mg")
+                .price(5.0)
+                .prescriptionRequired(false)
+                .imageUrl(null)
+                .build();
         Page<MedicineResponse> page = new PageImpl<>(List.of(med));
 
         when(medicineService.searchMedicines(any())).thenReturn(page);

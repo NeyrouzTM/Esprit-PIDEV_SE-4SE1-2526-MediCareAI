@@ -1,6 +1,7 @@
 package tn.esprit.tn.medicare_ai.service.implementation;
 
 
+import org.springframework.scheduling.annotation.Scheduled;
 import tn.esprit.tn.medicare_ai.dto.response.SubscriptionResponseDTO;
 import tn.esprit.tn.medicare_ai.entity.Subscription;
 import tn.esprit.tn.medicare_ai.entity.SubscriptionPlan;
@@ -124,6 +125,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         subscriptionRepository.delete(sub);
     }
 
+    @Override
+    public boolean hasActiveSubscription(Long userId) {
+        return subscriptionRepository.existsByUserIdAndStatus(userId, Subscription.SubscriptionStatus.ACTIVE);
+    }
+
     private SubscriptionResponseDTO mapToResponseDTO(Subscription sub) {
         SubscriptionResponseDTO dto = new SubscriptionResponseDTO();
         dto.setId(sub.getId());
@@ -137,4 +143,20 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 && LocalDateTime.now().isBefore(sub.getEndDate()));
         return dto;
     }
+    // Exécute tous les jours à 00h00
+    @Scheduled(cron = "0 0 0 * * ?")   // tous les jours à minuit
+    @Transactional
+    public void updateExpiredSubscriptions() {
+
+        List<Subscription> subscriptions = subscriptionRepository.findExpiredSubscriptions();
+
+        for (Subscription sub : subscriptions) {
+            sub.setStatus(Subscription.SubscriptionStatus.EXPIRED);
+            // Tu peux aussi mettre isPremium = false sur l'utilisateur
+        }
+
+        subscriptionRepository.saveAll(subscriptions);
+        System.out.println("✅ Scheduler : " + subscriptions.size() + " abonnements expirés mis à jour");
+    }
+
 }

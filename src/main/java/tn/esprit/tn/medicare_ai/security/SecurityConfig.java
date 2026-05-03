@@ -3,6 +3,7 @@ package tn.esprit.tn.medicare_ai.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -51,23 +52,20 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
-
-                        // ✅ Swagger autorisé
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**",
                                 "/webjars/**",
+                                "/MediCareAI/v3/api-docs/**",
+                                "/MediCareAI/swagger-ui/**",
+                                "/MediCareAI/swagger-ui.html",
                                 "/error"
                         ).permitAll()
-
-                        // ✅ Auth libre - /auth/** endpoints (register, login, etc.)
-                        .requestMatchers("/auth/**").permitAll()
-
-                        // ✅ Alerts - requires authentication
+                        .requestMatchers("/specialties/**", "/symptoms/**", "/diseases/**").permitAll()
                         .requestMatchers("/alerts/**").authenticated()
-
-                        // 🔒 Roles
                         .requestMatchers("/patient/**").hasRole("PATIENT")
                         .requestMatchers("/doctor/**").hasRole("DOCTOR")
                         .requestMatchers("/pharmacy/**").hasRole("PHARMACIST")
@@ -84,11 +82,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-
-        // ✅ Autoriser le frontend Angular sur http://localhost:4200
-        config.setAllowedOrigins(List.of(
-                "http://localhost:4200",
-                "http://localhost:4200/"
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

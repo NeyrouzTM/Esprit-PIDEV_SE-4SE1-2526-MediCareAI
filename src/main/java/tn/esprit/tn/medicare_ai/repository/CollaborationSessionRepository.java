@@ -12,4 +12,5 @@ import java.util.List;
 public interface CollaborationSessionRepository extends JpaRepository<CollaborationSession, Long> {
 
     List<CollaborationSession> findByCreatorId(Long creatorId);
+    boolean existsByIdAndParticipants_Id(Long sessionId, Long userId);
 }

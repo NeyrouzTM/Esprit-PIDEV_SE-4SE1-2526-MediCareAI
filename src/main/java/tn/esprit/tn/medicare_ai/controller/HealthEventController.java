@@ -69,7 +69,7 @@ public class HealthEventController {
     @Transactional
     @DeleteMapping("/{id}")
 
-    public void deleteEvent(Long id) {
+    public void deleteEvent(@PathVariable Long id) {
 
         HealthEvent event = healthEventRepository.findById(id).orElse(null);
 

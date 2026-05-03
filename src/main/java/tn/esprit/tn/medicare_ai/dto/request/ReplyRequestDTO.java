@@ -15,4 +15,5 @@ public class ReplyRequestDTO {
     @NotBlank(message = "Le contenu de la réponse est obligatoire")
     @Size(min = 5, message = "La réponse doit contenir au moins 5 caractères")
     private String content;
+    private Long authorId;
 }
