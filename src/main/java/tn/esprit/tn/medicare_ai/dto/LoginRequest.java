@@ -4,4 +4,5 @@ public record LoginRequest(
         String email,
         String password
 ) {
+    // Use record accessors: email() and password()
 }

@@ -13,4 +13,5 @@ public interface CollaborationSessionService {
     CollaborationSessionResponseDTO getSessionById(Long id);
     CollaborationSessionResponseDTO updateSession(Long id, CollaborationSessionRequestDTO dto, Long creatorId);
     void deleteSession(Long id, Long creatorId);
+    void addParticipantByEmail(Long sessionId, String email);
 }

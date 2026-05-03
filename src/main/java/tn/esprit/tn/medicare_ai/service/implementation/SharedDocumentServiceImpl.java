@@ -1,5 +1,7 @@
 package tn.esprit.tn.medicare_ai.service.implementation;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.tn.medicare_ai.dto.request.SharedDocumentRequestDTO;
 import tn.esprit.tn.medicare_ai.dto.response.SharedDocumentResponseDTO;
 import tn.esprit.tn.medicare_ai.entity.CollaborationSession;
@@ -14,6 +16,9 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,23 +37,56 @@ public class SharedDocumentServiceImpl implements SharedDocumentService {
         this.userRepository = userRepository;
     }
 
+
     @Override
     @Transactional
-    public SharedDocumentResponseDTO uploadDocument(SharedDocumentRequestDTO dto, Long sessionId, Long uploaderId) {
+    public SharedDocumentResponseDTO uploadDocument(
+            MultipartFile file,
+            String description,
+            Long sessionId) {
 
+        // 🔍 Vérifier fichier
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Fichier invalide");
+        }
+
+        // 🔍 Récupérer session
         CollaborationSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session non trouvée"));
 
-        User uploader = userRepository.findById(uploaderId)
-                .orElseThrow(() -> new EntityNotFoundException("Uploader non trouvé"));
-        // Vérification logique
-        if (uploader.getRole() != Role.DOCTOR && uploader.getRole() != Role.ADMIN) {
-            throw new IllegalArgumentException("Seuls les professionnels ou admins peuvent uploader des documents médicaux dans une session");
+        // 🔐 Récupérer utilisateur connecté (IMPORTANT)
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User uploader = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé"));
+
+        if (uploader == null) {
+            throw new EntityNotFoundException("Utilisateur non trouvé");
         }
 
+        // 🔒 Vérification rôle
+        if (uploader.getRole() != Role.DOCTOR && uploader.getRole() != Role.ADMIN) {
+            throw new IllegalArgumentException("Seuls les professionnels ou admins peuvent uploader");
+        }
+
+        // 📁 Générer nom fichier
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+        try {
+            // 📂 Sauvegarde locale (simple)
+            String uploadDir = "uploads/";
+            Path path = Paths.get(uploadDir + fileName);
+
+            Files.createDirectories(path.getParent());
+            Files.write(path, file.getBytes());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la sauvegarde du fichier");
+        }
+
+        // 💾 Sauvegarde DB
         SharedDocument document = SharedDocument.builder()
-                .fileName(dto.getFileName())
-                .fileUrl(dto.getFileUrl())
+                .fileName(fileName)
+                .fileUrl("uploads/" + fileName) // chemin simple
                 .session(session)
                 .uploader(uploader)
                 .build();

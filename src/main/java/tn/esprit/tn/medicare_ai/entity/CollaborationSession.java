@@ -3,6 +3,8 @@ package tn.esprit.tn.medicare_ai.entity;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,7 +23,8 @@ public class CollaborationSession {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @NotBlank(message = "Le titre est obligatoire")
+    @Size(min = 5, max = 100)
     @Column(nullable = false)
     private String title;
 

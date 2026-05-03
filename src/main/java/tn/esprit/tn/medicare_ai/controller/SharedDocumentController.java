@@ -2,6 +2,7 @@ package tn.esprit.tn.medicare_ai.controller;
 
 
 
+import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.tn.medicare_ai.dto.request.SharedDocumentRequestDTO;
 import tn.esprit.tn.medicare_ai.dto.response.SharedDocumentResponseDTO;
 import tn.esprit.tn.medicare_ai.service.interfaces.SharedDocumentService;
@@ -24,10 +25,12 @@ public class SharedDocumentController {
     @PostMapping("/sessions/{sessionId}")
     public ResponseEntity<SharedDocumentResponseDTO> uploadDocument(
             @PathVariable Long sessionId,
-            @Valid @RequestBody SharedDocumentRequestDTO dto,
-            @RequestParam Long uploaderId) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "description", required = false) String description) {
 
-        SharedDocumentResponseDTO created = documentService.uploadDocument(dto, sessionId, uploaderId);
+        SharedDocumentResponseDTO created =
+                documentService.uploadDocument(file, description, sessionId);
+
         return ResponseEntity.status(201).body(created);
     }
 

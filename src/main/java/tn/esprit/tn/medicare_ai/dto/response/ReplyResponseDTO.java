@@ -17,4 +17,6 @@ public class ReplyResponseDTO {
     private Long authorId;
     private String authorName;
     private LocalDateTime createdAt;
+    private int likesCount;
+    private boolean likedByCurrentUser;
 }

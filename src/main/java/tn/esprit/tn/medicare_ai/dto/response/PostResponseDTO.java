@@ -5,6 +5,7 @@ package tn.esprit.tn.medicare_ai.dto.response;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -18,6 +19,10 @@ public class PostResponseDTO {
     private Long authorId;
     private String authorName;
     private LocalDateTime createdAt;
-    private List<String> tags;
-    private boolean isPremiumOnly;
+    private Set<String> tags;
+    private Boolean isPremiumOnly;
+    private int likesCount;
+    private boolean likedByCurrentUser;
+    private int repliesCount;
+    private int viewsCount;
 }

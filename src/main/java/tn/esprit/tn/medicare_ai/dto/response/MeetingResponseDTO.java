@@ -3,7 +3,10 @@ package tn.esprit.tn.medicare_ai.dto.response;
 
 
 import lombok.*;
+import tn.esprit.tn.medicare_ai.entity.MeetingStatus;
+
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -19,6 +22,15 @@ public class MeetingResponseDTO {
     private Long organizerId;
     private String organizerName;
     private Set<Long> participantIds;
-    private boolean recorded;
+    private Set<String> participantNames;
+    private Boolean recorded;
     private String recordingUrl;
+
+    // Nouveaux champs cycle de vie
+    private MeetingStatus status;
+    private LocalDateTime startedAt;
+    private LocalDateTime endedAt;
+    private List<String> agendaPoints;
+    private String meetingNotes;
+    private Boolean pvGenerated;
 }
