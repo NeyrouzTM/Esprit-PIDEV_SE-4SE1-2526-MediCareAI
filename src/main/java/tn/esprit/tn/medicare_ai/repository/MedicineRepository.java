@@ -22,5 +22,8 @@ public interface MedicineRepository extends JpaRepository<Medicine, Long> {
                           @Param("category") MedicinieCategory category,
                           @Param("prescriptionRequired") Boolean prescriptionRequired,
                           Pageable pageable);
-}
 
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+}

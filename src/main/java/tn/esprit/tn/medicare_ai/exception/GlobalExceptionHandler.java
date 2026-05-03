@@ -43,6 +43,8 @@ public class GlobalExceptionHandler {
             InvalidPrescriptionException.class,
             PrescriptionExpiredException.class,
             DrugInteractionException.class,
+            InvalidVerificationCodeException.class,
+            VerificationCodeExpiredException.class,
             IllegalArgumentException.class,
             ConstraintViolationException.class
     })

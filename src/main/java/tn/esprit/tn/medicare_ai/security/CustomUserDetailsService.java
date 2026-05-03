@@ -1,6 +1,7 @@
 package tn.esprit.tn.medicare_ai.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,6 +13,7 @@ import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import java.util.List;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 

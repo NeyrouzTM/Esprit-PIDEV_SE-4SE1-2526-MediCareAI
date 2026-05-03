@@ -23,6 +23,7 @@ import tn.esprit.tn.medicare_ai.exception.InsufficientStockException;
 import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
 import tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
+import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -78,6 +79,9 @@ class OrderControllerTest {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private VerificationCodeRepository verificationCodeRepository;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {

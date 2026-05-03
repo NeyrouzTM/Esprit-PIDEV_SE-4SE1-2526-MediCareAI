@@ -14,6 +14,7 @@ import tn.esprit.tn.medicare_ai.dto.response.PrescriptionDetailResponse;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
+import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -63,6 +64,9 @@ class PrescriptionControllerTest {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private VerificationCodeRepository verificationCodeRepository;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
