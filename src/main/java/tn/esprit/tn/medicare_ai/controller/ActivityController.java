@@ -24,6 +24,7 @@ public class ActivityController {
     @PostMapping
     @Operation(summary = "Create")
     public ResponseEntity<ActivityResponse> create(@Valid @RequestBody ActivityRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
     }
 
     @GetMapping("/{id}")
