@@ -1,5 +1,8 @@
 package tn.esprit.tn.medicare_ai.controller;
 
+import java.time.Instant;
+import java.util.Map;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,5 +59,61 @@ public class AppointmentController {
     public ResponseEntity<?> delete(@PathVariable Long id) {
         appointmentService.delete(id);
         return ResponseEntity.ok("Appointment deleted");
+    }
+
+    @GetMapping("/{appointmentId}/reminders")
+    public ResponseEntity<?> getReminders(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(Map.of(
+                "appointmentId", appointmentId,
+                "status", "NO_REMINDER_PROVIDER",
+                "reminders", java.util.List.of()
+        ));
+    }
+
+    @PostMapping("/{appointmentId}/reminders/schedule")
+    public ResponseEntity<?> scheduleReminder(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(Map.of(
+                "appointmentId", appointmentId,
+                "status", "SCHEDULED",
+                "scheduledAt", Instant.now().toString()
+        ));
+    }
+
+    @PostMapping("/{appointmentId}/reminders/send")
+    public ResponseEntity<?> sendReminder(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(Map.of(
+                "appointmentId", appointmentId,
+                "status", "SENT",
+                "sentAt", Instant.now().toString()
+        ));
+    }
+
+    @GetMapping("/{appointmentId}/teleconsultation")
+    public ResponseEntity<?> getTeleconsultation(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(Map.of(
+                "appointmentId", appointmentId,
+                "status", "NOT_STARTED",
+                "joinUrl", ""
+        ));
+    }
+
+    @PostMapping("/{appointmentId}/teleconsultation/start")
+    public ResponseEntity<?> startTeleconsultation(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(Map.of(
+                "appointmentId", appointmentId,
+                "status", "STARTED",
+                "sessionId", "tele-" + appointmentId + "-" + Instant.now().toEpochMilli(),
+                "startedAt", Instant.now().toString()
+        ));
+    }
+
+    @PostMapping("/{appointmentId}/teleconsultation/join")
+    public ResponseEntity<?> joinTeleconsultation(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(Map.of(
+                "appointmentId", appointmentId,
+                "status", "JOINED",
+                "joinUrl", "https://tele.medicare-ai.local/session/" + appointmentId,
+                "joinedAt", Instant.now().toString()
+        ));
     }
 }

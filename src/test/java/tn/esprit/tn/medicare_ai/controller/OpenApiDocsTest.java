@@ -4,12 +4,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
-import tn.esprit.tn.medicare_ai.service.*;
+import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
+import tn.esprit.tn.medicare_ai.service.InventoryService;
+import tn.esprit.tn.medicare_ai.service.MedicineService;
+import tn.esprit.tn.medicare_ai.service.OrderService;
+import tn.esprit.tn.medicare_ai.service.PrescriptionService;
+import tn.esprit.tn.medicare_ai.service.RefillService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -21,7 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration"
         }
 )
-@AutoConfigureMockMvc
 class OpenApiDocsTest {
 
     @Autowired

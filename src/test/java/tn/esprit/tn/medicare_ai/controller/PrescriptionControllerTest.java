@@ -4,17 +4,23 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 import tn.esprit.tn.medicare_ai.dto.request.PrescriptionRequest;
 import tn.esprit.tn.medicare_ai.dto.response.PrescriptionDetailResponse;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
-import tn.esprit.tn.medicare_ai.service.*;
+import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
+import tn.esprit.tn.medicare_ai.service.InventoryService;
+import tn.esprit.tn.medicare_ai.service.MedicineService;
+import tn.esprit.tn.medicare_ai.service.OrderService;
+import tn.esprit.tn.medicare_ai.service.PrescriptionService;
+import tn.esprit.tn.medicare_ai.service.RefillService;
 
 import java.util.Optional;
 
@@ -32,10 +38,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration"
         }
 )
-@AutoConfigureMockMvc
 class PrescriptionControllerTest {
 
     @Autowired
+    private WebApplicationContext webApplicationContext;
     private MockMvc mockMvc;
 
     @MockitoBean
@@ -61,6 +67,12 @@ class PrescriptionControllerTest {
 
     @MockitoBean
     private VerificationCodeRepository verificationCodeRepository;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+                .build();
+    }
 
     @Test
     @DisplayName("POST /api/pharmacy/prescriptions: doctor creates prescription successfully")

@@ -36,12 +36,21 @@ public class OpenApiConfig {
     }
 
     @Bean
+    public GroupedOpenApi allApi() {
+        return GroupedOpenApi.builder()
+                .group("all")
+                .pathsToMatch("/**")
+                .build();
+    }
+
+    @Bean
     public GroupedOpenApi pharmacyApi() {
         return GroupedOpenApi.builder()
                 .group("e-pharmacy")
-                .pathsToMatch("/api/pharmacy/**")
+                .pathsToMatch("/api/pharmacy/**", "/api/users/**", "/auth/**")
                 .build();
     }
+
     @Bean
     public GroupedOpenApi diseaseApi() {
         return GroupedOpenApi.builder()
@@ -49,13 +58,15 @@ public class OpenApiConfig {
                 .pathsToMatch("/diseases/**")
                 .build();
     }
+
     @Bean
-    public GroupedOpenApi dauthApi() {
+    public GroupedOpenApi authApi() {
         return GroupedOpenApi.builder()
                 .group("auth")
                 .pathsToMatch("/auth/**")
                 .build();
     }
+
     @Bean
     public GroupedOpenApi eventApi() {
         return GroupedOpenApi.builder()
@@ -63,6 +74,7 @@ public class OpenApiConfig {
                 .pathsToMatch("/events/**")
                 .build();
     }
+
     @Bean
     public GroupedOpenApi specialtyApi() {
         return GroupedOpenApi.builder()
@@ -70,6 +82,7 @@ public class OpenApiConfig {
                 .pathsToMatch("/specialties/**")
                 .build();
     }
+
     @Bean
     public GroupedOpenApi symptomApi() {
         return GroupedOpenApi.builder()
@@ -78,4 +91,35 @@ public class OpenApiConfig {
                 .build();
     }
 
+    @Bean
+    public GroupedOpenApi forumApi() {
+        return GroupedOpenApi.builder()
+                .group("Forum")
+                .pathsToMatch("/api/forum/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi meetingApi() {
+        return GroupedOpenApi.builder()
+                .group("Meetings")
+                .pathsToMatch("/api/meetings/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi subscriptionApi() {
+        return GroupedOpenApi.builder()
+                .group("Subscriptions")
+                .pathsToMatch("/api/subscriptions/**", "/api/subscription-plans/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi collaborationApi() {
+        return GroupedOpenApi.builder()
+                .group("Collaboration")
+                .pathsToMatch("/api/collaboration/**")
+                .build();
+    }
 }
