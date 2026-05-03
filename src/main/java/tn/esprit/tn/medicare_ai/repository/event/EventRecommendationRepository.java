@@ -1,15 +1,18 @@
 package tn.esprit.tn.medicare_ai.repository.event;
 
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import tn.esprit.tn.medicare_ai.entity.HealthEvent;
 import tn.esprit.tn.medicare_ai.entity.User;
 
 import java.util.List;
 
-public interface RecommendationRepository extends JpaRepository<User, Long> {
+/**
+ * Queries for event-based recommendations (user + health events).
+ * Named distinct from {@link tn.esprit.tn.medicare_ai.repository.RecommendationRepository}
+ * (pregnancy {@code Recommendation} entity) to avoid duplicate Spring bean names.
+ */
+public interface EventRecommendationRepository extends JpaRepository<User, Long> {
 
     @Query("""
            select u from User u

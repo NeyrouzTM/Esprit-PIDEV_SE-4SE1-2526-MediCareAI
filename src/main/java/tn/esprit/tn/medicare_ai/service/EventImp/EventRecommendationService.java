@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import tn.esprit.tn.medicare_ai.entity.HealthEvent;
 import tn.esprit.tn.medicare_ai.entity.User;
-import tn.esprit.tn.medicare_ai.repository.event.RecommendationRepository;
+import tn.esprit.tn.medicare_ai.repository.event.EventRecommendationRepository;
 import tn.esprit.tn.medicare_ai.repository.event.HealthEventRepository;
 
 import java.util.*;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EventRecommendationService {
 
-    private final RecommendationRepository recommendationRepository;
+    private final EventRecommendationRepository eventRecommendationRepository;
     private final HealthEventRepository healthEventRepository;
 
     /**
@@ -25,7 +25,7 @@ public class EventRecommendationService {
      * (catégories auxquelles il a participé le plus en premier)
      */
     public List<HealthEvent> getRecommendedEvents(Long userId) {
-        User user = recommendationRepository.findUserWithEvents(userId);
+        User user = eventRecommendationRepository.findUserWithEvents(userId);
 
         if (user == null || user.getEvents() == null || user.getEvents().isEmpty()) {
             log.info("[Recommendation] User {} has no event history. Returning all events.", userId);
@@ -33,7 +33,7 @@ public class EventRecommendationService {
         }
 
         // Récupère l'ordre des catégories (par fréquence décroissante)
-        List<Object[]> categoryFrequency = recommendationRepository.getCategoryFrequencyForUser(userId);
+        List<Object[]> categoryFrequency = eventRecommendationRepository.getCategoryFrequencyForUser(userId);
         List<Object> categoryOrder = new ArrayList<>();
 
         for (Object[] row : categoryFrequency) {
