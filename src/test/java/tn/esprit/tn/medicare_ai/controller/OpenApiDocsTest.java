@@ -3,56 +3,55 @@ package tn.esprit.tn.medicare_ai.controller;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tn.esprit.tn.medicare_ai.repository.UserRepository;
-import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
-import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
-import tn.esprit.tn.medicare_ai.service.InventoryService;
-import tn.esprit.tn.medicare_ai.service.MedicineService;
-import tn.esprit.tn.medicare_ai.service.OrderService;
-import tn.esprit.tn.medicare_ai.service.PrescriptionService;
-import tn.esprit.tn.medicare_ai.service.RefillService;
+import tn.esprit.tn.medicare_ai.repository.AllergyRepository;
+import tn.esprit.tn.medicare_ai.repository.AppointmentRepository;
+import tn.esprit.tn.medicare_ai.repository.AvailabilityRepository;
+import tn.esprit.tn.medicare_ai.repository.LabResultRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalImageRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
+import tn.esprit.tn.medicare_ai.repository.PrescriptionRepository;
+import tn.esprit.tn.medicare_ai.repository.VisitNoteRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-        properties = {
-                "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration,org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration"
-        }
+        webEnvironment = SpringBootTest.WebEnvironment.MOCK
 )
+@AutoConfigureMockMvc
 class OpenApiDocsTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private MedicineService medicineService;
+    private AllergyRepository allergyRepository;
 
     @MockitoBean
-    private PrescriptionService prescriptionService;
+    private AppointmentRepository appointmentRepository;
 
     @MockitoBean
-    private OrderService orderService;
+    private AvailabilityRepository availabilityRepository;
 
     @MockitoBean
-    private InventoryService inventoryService;
+    private LabResultRepository labResultRepository;
 
     @MockitoBean
-    private DrugInteractionService drugInteractionService;
+    private MedicalImageRepository medicalImageRepository;
 
     @MockitoBean
-    private RefillService refillService;
+    private MedicalRecordRepository medicalRecordRepository;
 
     @MockitoBean
-    private UserRepository userRepository;
+    private PrescriptionRepository prescriptionRepository;
 
     @MockitoBean
-    private VerificationCodeRepository verificationCodeRepository;
+    private VisitNoteRepository visitNoteRepository;
 
     @Test
     @DisplayName("OpenAPI grouped docs endpoint is available")

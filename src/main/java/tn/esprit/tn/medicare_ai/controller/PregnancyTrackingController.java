@@ -21,7 +21,7 @@ public class PregnancyTrackingController {
     private final IPregnancyTrackingService service;
 
     @PostMapping
-    @Operation(summary = "Create")
+    @Operation(summary = "Create - currentWeek and dueDate are auto-calculated")
     public ResponseEntity<PregnancyTrackingResponse> create(@Valid @RequestBody PregnancyTrackingRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
     }
@@ -38,8 +38,14 @@ public class PregnancyTrackingController {
         return ResponseEntity.ok(service.getAll());
     }
 
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Get by User ID")
+    public ResponseEntity<List<PregnancyTrackingResponse>> getByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(service.getByUserId(userId));
+    }
+
     @PutMapping("/{id}")
-    @Operation(summary = "Update")
+    @Operation(summary = "Update - currentWeek and dueDate are auto-recalculated")
     public ResponseEntity<PregnancyTrackingResponse> update(@PathVariable Long id, @Valid @RequestBody PregnancyTrackingRequest request) {
         return ResponseEntity.ok(service.update(id, request));
     }
@@ -51,3 +57,5 @@ public class PregnancyTrackingController {
         return ResponseEntity.noContent().build();
     }
 }
+
+

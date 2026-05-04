@@ -26,7 +26,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Medicare AI API")
-                        .description("OpenAPI documentation for medicine search, prescriptions, orders, refills, inventory, and drug interaction endpoints.")
+                        .description("OpenAPI documentation for medicine search, prescriptions, orders, refills, inventory, and user directory endpoints.")
                         .version("v1")
                         .contact(new Contact()
                                 .name("Medicare AI Team")

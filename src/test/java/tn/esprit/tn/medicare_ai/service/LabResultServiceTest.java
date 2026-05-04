@@ -46,7 +46,7 @@ class LabResultServiceTest {
                 .result("Normal")
                 .build();
 
-        LabResult result = labResultService.create(dto);
+        LabResult result = labResultService.create(dto, 99L, "ADMIN");
 
         assertEquals("CBC", result.getTestName());
         assertEquals(4L, result.getMedicalRecord().getId());
@@ -61,7 +61,7 @@ class LabResultServiceTest {
                 .build();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> labResultService.create(dto));
+                () -> labResultService.create(dto, 99L, "ADMIN"));
         assertEquals("Test name required", ex.getMessage());
     }
 }

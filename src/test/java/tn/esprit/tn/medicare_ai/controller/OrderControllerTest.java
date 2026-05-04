@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -22,8 +23,16 @@ import tn.esprit.tn.medicare_ai.exception.DrugInteractionException;
 import tn.esprit.tn.medicare_ai.exception.InsufficientStockException;
 import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
 import tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException;
+import tn.esprit.tn.medicare_ai.repository.AllergyRepository;
+import tn.esprit.tn.medicare_ai.repository.AppointmentRepository;
+import tn.esprit.tn.medicare_ai.repository.AvailabilityRepository;
+import tn.esprit.tn.medicare_ai.repository.LabResultRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalImageRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
+import tn.esprit.tn.medicare_ai.repository.PrescriptionRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
+import tn.esprit.tn.medicare_ai.repository.VisitNoteRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -59,29 +68,53 @@ class OrderControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockitoBean
+    @MockBean
     private OrderService orderService;
 
-    @MockitoBean
+    @MockBean
     private MedicineService medicineService;
 
-    @MockitoBean
+    @MockBean
     private PrescriptionService prescriptionService;
 
-    @MockitoBean
+    @MockBean
     private InventoryService inventoryService;
 
-    @MockitoBean
+    @MockBean
     private DrugInteractionService drugInteractionService;
 
-    @MockitoBean
+    @MockBean
     private RefillService refillService;
 
-    @MockitoBean
+    @MockBean
     private UserRepository userRepository;
 
-    @MockitoBean
+    @MockBean
     private VerificationCodeRepository verificationCodeRepository;
+
+    @MockitoBean
+    private AllergyRepository allergyRepository;
+
+    @MockitoBean
+    private AppointmentRepository appointmentRepository;
+
+    @MockitoBean
+    private AvailabilityRepository availabilityRepository;
+
+    @MockitoBean
+    private LabResultRepository labResultRepository;
+
+    @MockitoBean
+    private MedicalImageRepository medicalImageRepository;
+
+    @MockitoBean
+    private MedicalRecordRepository medicalRecordRepository;
+
+    @MockitoBean
+    private PrescriptionRepository prescriptionRepository;
+
+    @MockitoBean
+    private VisitNoteRepository visitNoteRepository;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
@@ -91,7 +124,7 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/pharmacy/orders: valid order returns 200")
+    @DisplayName("POST /api/pharmacy/orders: valid MedicineOrder returns 200")
     @WithMockUser(username = "patient@med.com", roles = "PATIENT")
     void placeOrder_valid_returnsOk() throws Exception {
         mockCurrentPatient();
@@ -155,7 +188,7 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/pharmacy/orders: returns order history for patient")
+    @DisplayName("GET /api/pharmacy/orders: returns MedicineOrder history for patient")
     @WithMockUser(username = "patient@med.com", roles = "PATIENT")
     void getOrderHistory_returnsOrders() throws Exception {
         mockCurrentPatient();
@@ -168,7 +201,7 @@ class OrderControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/pharmacy/orders/{id}: order exists returns 200")
+    @DisplayName("GET /api/pharmacy/orders/{id}: MedicineOrder exists returns 200")
     @WithMockUser(username = "patient@med.com", roles = "PATIENT")
     void getOrderById_exists_returns200() throws Exception {
         when(orderService.getOrderById(1L)).thenReturn(OrderDetailResponse.orderDetailBuilder().id(1L).build());
@@ -206,3 +239,8 @@ class OrderControllerTest {
         when(userRepository.findByEmail("patient@med.com")).thenReturn(Optional.of(patient));
     }
 }
+
+
+
+
+

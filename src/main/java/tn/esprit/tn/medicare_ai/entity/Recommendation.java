@@ -28,7 +28,12 @@ public class Recommendation {
     @Column(nullable = false, length = 20)
     private RecommendationCategory category;
 
+    // ✅ FIXED: Changed to nullable = true
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pregnancy_tracking_id", nullable = false)
+    @JoinColumn(name = "pregnancy_tracking_id", nullable = true, foreignKey = @ForeignKey(name = "fk_rec_pregnancy_tracking"))
     private PregnancyTracking pregnancyTracking;
+
+    // Lien inverse avec Alert (Optional)
+    @OneToOne(mappedBy = "recommendation")
+    private Alert alert;
 }

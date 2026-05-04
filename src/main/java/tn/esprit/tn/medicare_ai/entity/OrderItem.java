@@ -17,7 +17,7 @@ public class OrderItem {
 
     @ManyToOne
     @JoinColumn(name = "order_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_order_item_order"))
-    private Order order;
+    private MedicineOrder order;
 
     @ManyToOne
     @JoinColumn(name = "medicine_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_order_item_medicine"))
@@ -27,7 +27,7 @@ public class OrderItem {
     private Double unitPrice;      // price at purchase time (snapshot)
     private Double subtotal;       // calculated = quantity * unitPrice
 
-    // Optional: track which prescription item this order fulfills
+    // Optional: track which prescription item this MedicineOrder fulfills
     @ManyToOne
     @JoinColumn(name = "prescription_item_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_order_item_prescription_item"))
     private PrescriptionItem prescriptionItem;
@@ -42,3 +42,4 @@ public class OrderItem {
         }
     }
 }
+

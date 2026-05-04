@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tn.esprit.tn.medicare_ai.dto.MedicalRecordDTO;
 import tn.esprit.tn.medicare_ai.entity.MedicalRecord;
+import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
@@ -37,6 +38,7 @@ class MedicalRecordServiceTest {
     void create_validDto_savesRecord() {
         User patient = new User();
         patient.setId(10L);
+        patient.setRole(Role.PATIENT);
 
         when(userRepository.findById(10L)).thenReturn(Optional.of(patient));
         when(medicalRecordRepository.findByPatient(patient)).thenReturn(Optional.empty());
@@ -47,12 +49,11 @@ class MedicalRecordServiceTest {
         });
 
         MedicalRecordDTO dto = MedicalRecordDTO.builder()
-                .patientId(10L)
                 .bloodType("O+")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
                 .build();
 
-        MedicalRecord result = medicalRecordService.create(dto);
+        MedicalRecord result = medicalRecordService.create(dto, 10L);
 
         assertEquals(100L, result.getId());
         assertEquals("O+", result.getBloodType());
@@ -64,14 +65,17 @@ class MedicalRecordServiceTest {
     void create_duplicatePatient_throws() {
         User patient = new User();
         patient.setId(10L);
+        patient.setRole(Role.PATIENT);
 
         when(userRepository.findById(10L)).thenReturn(Optional.of(patient));
         when(medicalRecordRepository.findByPatient(patient)).thenReturn(Optional.of(new MedicalRecord()));
 
-        MedicalRecordDTO dto = MedicalRecordDTO.builder().patientId(10L).build();
+        MedicalRecordDTO dto = MedicalRecordDTO.builder().build();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> medicalRecordService.create(dto));
+                () -> medicalRecordService.create(dto, 10L));
         assertEquals("Medical record already exists for this patient", ex.getMessage());
     }
 }
+
+

@@ -1,0 +1,32 @@
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.059 s -- in tn.esprit.tn.medicare_ai.controller.AllergyControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.232 s -- in tn.esprit.tn.medicare_ai.controller.AppointmentControllerTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.512 s -- in tn.esprit.tn.medicare_ai.controller.AuthControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.126 s -- in tn.esprit.tn.medicare_ai.controller.AvailabilityControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.130 s -- in tn.esprit.tn.medicare_ai.controller.InteractionControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.095 s -- in tn.esprit.tn.medicare_ai.controller.LabResultControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.061 s -- in tn.esprit.tn.medicare_ai.controller.LegacyPrescriptionControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.095 s -- in tn.esprit.tn.medicare_ai.controller.MedicalImageControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.156 s -- in tn.esprit.tn.medicare_ai.controller.MedicalRecordControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.104 s -- in tn.esprit.tn.medicare_ai.controller.MedicineControllerTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.047 s -- in tn.esprit.tn.medicare_ai.controller.OpenApiDocsTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.218 s -- in tn.esprit.tn.medicare_ai.controller.OrderControllerTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s -- in tn.esprit.tn.medicare_ai.controller.PatientControllerTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.134 s -- in tn.esprit.tn.medicare_ai.controller.PrescriptionControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.084 s -- in tn.esprit.tn.medicare_ai.controller.RefillControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.133 s -- in tn.esprit.tn.medicare_ai.controller.VisitNoteControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.086 s -- in tn.esprit.tn.medicare_ai.service.AllergyServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s -- in tn.esprit.tn.medicare_ai.service.AppointmentServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.227 s -- in tn.esprit.tn.medicare_ai.service.AuthServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s -- in tn.esprit.tn.medicare_ai.service.AvailabilityServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.098 s -- in tn.esprit.tn.medicare_ai.service.DrugInteractionServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.110 s -- in tn.esprit.tn.medicare_ai.service.InventoryServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in tn.esprit.tn.medicare_ai.service.LabResultServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s -- in tn.esprit.tn.medicare_ai.service.MedicalImageServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s -- in tn.esprit.tn.medicare_ai.service.MedicalRecordServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in tn.esprit.tn.medicare_ai.service.MedicineServiceTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.143 s -- in tn.esprit.tn.medicare_ai.service.OrderServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in tn.esprit.tn.medicare_ai.service.PrescriptionServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.101 s -- in tn.esprit.tn.medicare_ai.service.RefillServiceTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s -- in tn.esprit.tn.medicare_ai.service.VisitNoteServiceTest
+[INFO] Tests run: 74, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS

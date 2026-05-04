@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(name = "OrderItemRequest", description = "Line item in a place-order request.")
+@Schema(name = "OrderItemRequest", description = "Line item in a place-MedicineOrder request.")
 public class OrderItemRequest {
     @Schema(description = "Medicine identifier.", example = "10")
     @NotNull
@@ -26,3 +26,4 @@ public class OrderItemRequest {
     @Schema(description = "Optional prescription item identifier for prescription-bound medicine.", example = "501")
     private Long prescriptionItemId;
 }
+

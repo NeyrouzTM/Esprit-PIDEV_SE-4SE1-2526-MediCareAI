@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -16,8 +17,16 @@ import tn.esprit.tn.medicare_ai.dto.response.RefillResponse;
 import tn.esprit.tn.medicare_ai.entity.RefillStatus;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
+import tn.esprit.tn.medicare_ai.repository.AllergyRepository;
+import tn.esprit.tn.medicare_ai.repository.AppointmentRepository;
+import tn.esprit.tn.medicare_ai.repository.AvailabilityRepository;
+import tn.esprit.tn.medicare_ai.repository.LabResultRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalImageRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
+import tn.esprit.tn.medicare_ai.repository.PrescriptionRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
+import tn.esprit.tn.medicare_ai.repository.VisitNoteRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -50,29 +59,53 @@ class RefillControllerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockitoBean
+    @MockBean
     private RefillService refillService;
 
-    @MockitoBean
+    @MockBean
     private PrescriptionService prescriptionService;
 
-    @MockitoBean
+    @MockBean
     private MedicineService medicineService;
 
-    @MockitoBean
+    @MockBean
     private OrderService orderService;
 
-    @MockitoBean
+    @MockBean
     private InventoryService inventoryService;
 
-    @MockitoBean
+    @MockBean
     private DrugInteractionService drugInteractionService;
 
-    @MockitoBean
+    @MockBean
     private UserRepository userRepository;
 
-    @MockitoBean
+    @MockBean
     private VerificationCodeRepository verificationCodeRepository;
+
+    @MockitoBean
+    private AllergyRepository allergyRepository;
+
+    @MockitoBean
+    private AppointmentRepository appointmentRepository;
+
+    @MockitoBean
+    private AvailabilityRepository availabilityRepository;
+
+    @MockitoBean
+    private LabResultRepository labResultRepository;
+
+    @MockitoBean
+    private MedicalImageRepository medicalImageRepository;
+
+    @MockitoBean
+    private MedicalRecordRepository medicalRecordRepository;
+
+    @MockitoBean
+    private PrescriptionRepository prescriptionRepository;
+
+    @MockitoBean
+    private VisitNoteRepository visitNoteRepository;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
@@ -128,3 +161,7 @@ class RefillControllerTest {
         when(userRepository.findByEmail("patient@med.com")).thenReturn(Optional.of(patient));
     }
 }
+
+
+
+

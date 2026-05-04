@@ -46,7 +46,7 @@ class AllergyServiceTest {
                 .severity("HIGH")
                 .build();
 
-        Allergy result = allergyService.create(dto);
+        Allergy result = allergyService.create(dto, 99L, "ADMIN");
 
         assertEquals("Peanuts", result.getAllergyName());
         assertEquals("HIGH", result.getSeverity());
@@ -62,7 +62,7 @@ class AllergyServiceTest {
                 .build();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> allergyService.create(dto));
+                () -> allergyService.create(dto, 99L, "ADMIN"));
         assertEquals("Severity required", ex.getMessage());
     }
 }
