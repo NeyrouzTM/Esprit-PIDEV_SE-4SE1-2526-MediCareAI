@@ -54,6 +54,21 @@ public class VisitNoteController {
         return ResponseEntity.ok("Visit note deleted");
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasAnyRole('PATIENT','DOCTOR','ADMIN')")
+    public ResponseEntity<?> searchClinicalNotes(
+            @RequestParam(required = false) String patientKeyword,
+            @RequestParam(required = false) String doctorKeyword,
+            @RequestParam(required = false) String clinicalKeyword) {
+        return ResponseEntity.ok(visitNoteService.searchClinicalNotes(
+                patientKeyword,
+                doctorKeyword,
+                clinicalKeyword,
+                getCurrentUserId(),
+                getCurrentUserRole()
+        ));
+    }
+
     private Long getCurrentUserId() {
         return getCurrentUser().getId();
     }

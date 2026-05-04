@@ -7,7 +7,10 @@ public record UserUpdateRequest(
         String email,
         String password,
         Role role,
-        Boolean enabled
+        Boolean enabled,
+        Long specialtyId,
+        String clinicalDepartment,
+        String clinicalKeywords
 ) {
 }
 

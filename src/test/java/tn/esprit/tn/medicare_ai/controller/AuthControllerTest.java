@@ -10,12 +10,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tn.esprit.tn.medicare_ai.dto.UserResponse;
 import tn.esprit.tn.medicare_ai.dto.UserUpdateRequest;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.service.IAuthService;
+import tn.esprit.tn.medicare_ai.service.PhysicianRecommendationService;
 
 import java.util.List;
 
@@ -38,6 +40,9 @@ class AuthControllerTest {
     @Mock
     private IAuthService authService;
 
+    @Mock
+    private PhysicianRecommendationService physicianRecommendationService;
+
     @InjectMocks
     private AuthController authController;
 
@@ -45,7 +50,10 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(authController)
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
     }
 
     @Test
@@ -80,7 +88,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("PUT /auth/users/{id} updates user")
     void updateUser_returnsUpdated() throws Exception {
-        UserUpdateRequest req = new UserUpdateRequest("Updated", null, null, null, true);
+        UserUpdateRequest req = new UserUpdateRequest("Updated", null, null, null, true, null, null, null);
 
         when(authService.updateUser(eq(5L), any(UserUpdateRequest.class)))
                 .thenReturn(new UserResponse(5L, "Updated", "john@med.com", Role.PATIENT, true));

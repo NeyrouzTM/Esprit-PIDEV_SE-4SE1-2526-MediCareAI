@@ -56,7 +56,7 @@ class VisitNoteServiceTest {
                 .subjective("Headache")
                 .build();
 
-        VisitNote result = visitNoteService.create(dto);
+        VisitNote result = visitNoteService.create(dto, 99L, "ADMIN");
 
         assertEquals(1L, result.getMedicalRecord().getId());
         assertEquals(2L, result.getDoctor().getId());
@@ -73,8 +73,7 @@ class VisitNoteServiceTest {
         when(visitNoteRepository.findById(5L)).thenReturn(Optional.of(note));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> visitNoteService.delete(5L));
+                () -> visitNoteService.delete(5L, 99L, "ADMIN"));
         assertEquals("Cannot delete a finalized visit note", ex.getMessage());
     }
 }
-

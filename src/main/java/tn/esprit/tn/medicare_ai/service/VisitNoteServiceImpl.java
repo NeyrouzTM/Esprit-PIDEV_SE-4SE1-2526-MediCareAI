@@ -12,6 +12,7 @@ import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.repository.VisitNoteRepository;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -94,6 +95,30 @@ public class VisitNoteServiceImpl implements VisitNoteService {
         visitNoteRepository.delete(visitNote);
     }
 
+    @Override
+    public List<VisitNote> searchClinicalNotes(String patientKeyword, String doctorKeyword, String clinicalKeyword,
+                                               Long currentUserId, String currentRole) {
+        List<VisitNote> allMatches = visitNoteRepository.searchClinicalNotes(
+                normalizeKeyword(patientKeyword),
+                normalizeKeyword(doctorKeyword),
+                normalizeKeyword(clinicalKeyword)
+        );
+
+        if ("ADMIN".equals(currentRole) || "DOCTOR".equals(currentRole)) {
+            return allMatches;
+        }
+
+        if ("PATIENT".equals(currentRole)) {
+            return allMatches.stream()
+                    .filter(vn -> vn.getMedicalRecord() != null
+                            && vn.getMedicalRecord().getPatient() != null
+                            && currentUserId.equals(vn.getMedicalRecord().getPatient().getId()))
+                    .collect(Collectors.toList());
+        }
+
+        throw new UnauthorizedActionException("You are not allowed to search visit notes");
+    }
+
     private void ensureCanAccessRecord(MedicalRecord record, Long currentUserId, String currentRole) {
         if ("ADMIN".equals(currentRole) || "DOCTOR".equals(currentRole)) {
             return;
@@ -102,5 +127,12 @@ public class VisitNoteServiceImpl implements VisitNoteService {
             return;
         }
         throw new UnauthorizedActionException("You are not allowed to access this visit note data");
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+        return keyword.trim();
     }
 }

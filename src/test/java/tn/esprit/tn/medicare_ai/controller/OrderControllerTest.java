@@ -21,7 +21,15 @@ import tn.esprit.tn.medicare_ai.exception.DrugInteractionException;
 import tn.esprit.tn.medicare_ai.exception.InsufficientStockException;
 import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
 import tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException;
+import tn.esprit.tn.medicare_ai.repository.AllergyRepository;
+import tn.esprit.tn.medicare_ai.repository.AppointmentRepository;
+import tn.esprit.tn.medicare_ai.repository.AvailabilityRepository;
+import tn.esprit.tn.medicare_ai.repository.LabResultRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalImageRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
+import tn.esprit.tn.medicare_ai.repository.PrescriptionRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
+import tn.esprit.tn.medicare_ai.repository.VisitNoteRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -76,6 +84,30 @@ class OrderControllerTest {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private AllergyRepository allergyRepository;
+
+    @MockitoBean
+    private AppointmentRepository appointmentRepository;
+
+    @MockitoBean
+    private AvailabilityRepository availabilityRepository;
+
+    @MockitoBean
+    private LabResultRepository labResultRepository;
+
+    @MockitoBean
+    private MedicalImageRepository medicalImageRepository;
+
+    @MockitoBean
+    private MedicalRecordRepository medicalRecordRepository;
+
+    @MockitoBean
+    private PrescriptionRepository prescriptionRepository;
+
+    @MockitoBean
+    private VisitNoteRepository visitNoteRepository;
 
     @Test
     @DisplayName("POST /api/pharmacy/orders: valid order returns 200")

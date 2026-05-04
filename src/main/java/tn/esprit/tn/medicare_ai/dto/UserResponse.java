@@ -7,7 +7,13 @@ public record UserResponse(
         String fullName,
         String email,
         Role role,
-        boolean enabled
+        boolean enabled,
+        Long specialtyId,
+        String clinicalDepartment,
+        String clinicalKeywords
 ) {
+    public UserResponse(Long id, String fullName, String email, Role role, boolean enabled) {
+        this(id, fullName, email, role, enabled, null, null, null);
+    }
 }
 

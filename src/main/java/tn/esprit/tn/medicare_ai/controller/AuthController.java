@@ -14,13 +14,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 import tn.esprit.tn.medicare_ai.dto.AuthResponse;
 import tn.esprit.tn.medicare_ai.dto.LoginRequest;
 import tn.esprit.tn.medicare_ai.dto.RegisterRequest;
+import tn.esprit.tn.medicare_ai.dto.PhysicianRecommendationDto;
 import tn.esprit.tn.medicare_ai.dto.UserResponse;
 import tn.esprit.tn.medicare_ai.dto.UserUpdateRequest;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.service.IAuthService;
+import tn.esprit.tn.medicare_ai.service.PhysicianRecommendationService;
 
 @RestController
 @CrossOrigin("*")
@@ -30,6 +35,7 @@ import tn.esprit.tn.medicare_ai.service.IAuthService;
 public class AuthController {
 
     private final IAuthService authService;
+    private final PhysicianRecommendationService physicianRecommendationService;
 
     @PostMapping("/register")
     @Operation(summary = "Register new user", description = "Public endpoint to create a new user account")
@@ -59,6 +65,16 @@ public class AuthController {
             @RequestParam(required = false) String query,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(authService.getDoctors(query, pageable));
+    }
+
+    @GetMapping("/doctors/recommend")
+    @PreAuthorize("isAuthenticated()")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Rank doctors by clinical keywords", description = "Matches keywords against doctor profile and visit-note SOAP text.")
+    public ResponseEntity<List<PhysicianRecommendationDto>> recommendDoctors(
+            @RequestParam String keywords,
+            @RequestParam(defaultValue = "15") int limit) {
+        return ResponseEntity.ok(physicianRecommendationService.recommend(keywords, limit));
     }
 
     @GetMapping("/users")

@@ -8,10 +8,13 @@ import org.springframework.data.repository.query.Param;
 import tn.esprit.tn.medicare_ai.entity.Role;
 import tn.esprit.tn.medicare_ai.entity.User;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
+
+    List<User> findByRole(Role role);
 
     @Query("""
             select u from User u

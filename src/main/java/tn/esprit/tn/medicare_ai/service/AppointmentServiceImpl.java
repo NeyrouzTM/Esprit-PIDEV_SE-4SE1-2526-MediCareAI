@@ -2,6 +2,7 @@ package tn.esprit.tn.medicare_ai.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tn.esprit.tn.medicare_ai.dto.AppointmentDTO;
 import tn.esprit.tn.medicare_ai.entity.Appointment;
 import tn.esprit.tn.medicare_ai.entity.Role;
@@ -10,6 +11,7 @@ import tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException;
 import tn.esprit.tn.medicare_ai.repository.AppointmentRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,17 +22,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final UserRepository userRepository;
 
     @Override
-    public Appointment create(AppointmentDTO dto, Long currentUserId) {
+    public Appointment create(AppointmentDTO dto, Long currentUserId, String currentRole) {
         if (dto.getDoctorId() == null)
             throw new IllegalArgumentException("Doctor ID required");
         if (dto.getAppointmentDate() == null)
             throw new IllegalArgumentException("Appointment date required");
 
-        User patient = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Authenticated patient not found"));
-        if (patient.getRole() != Role.PATIENT) {
-            throw new UnauthorizedActionException("Only patients can create appointments");
-        }
+        User patient = resolvePatientForNewAppointment(dto, currentUserId, currentRole);
 
         User doctor = userRepository.findById(dto.getDoctorId())
                 .orElseThrow(() -> new IllegalArgumentException("Doctor not found"));
@@ -42,6 +40,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .patient(patient)
                 .doctor(doctor)
                 .appointmentDate(dto.getAppointmentDate())
+                .appointmentEndDate(dto.getEndTime())
                 .status("PENDING")
                 .reason(dto.getReason())
                 .consultationType(dto.getConsultationType())
@@ -49,6 +48,35 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .build();
 
         return appointmentRepository.save(appointment);
+    }
+
+    /**
+     * PATIENT books as themselves. ADMIN/DOCTOR book on behalf of {@link AppointmentDTO#getPatientId()}.
+     */
+    private User resolvePatientForNewAppointment(AppointmentDTO dto, Long currentUserId, String currentRole) {
+        if ("PATIENT".equals(currentRole)) {
+            User patient = userRepository.findById(currentUserId)
+                    .orElseThrow(() -> new IllegalArgumentException("Authenticated patient not found"));
+            if (patient.getRole() != Role.PATIENT) {
+                throw new UnauthorizedActionException("Only patients can create appointments as a patient");
+            }
+            if (dto.getPatientId() != null && !dto.getPatientId().equals(currentUserId)) {
+                throw new UnauthorizedActionException("Patients cannot book for another user");
+            }
+            return patient;
+        }
+        if ("ADMIN".equals(currentRole) || "DOCTOR".equals(currentRole)) {
+            if (dto.getPatientId() == null) {
+                throw new IllegalArgumentException("Patient ID required when creating as staff");
+            }
+            User patient = userRepository.findById(dto.getPatientId())
+                    .orElseThrow(() -> new IllegalArgumentException("Patient not found"));
+            if (patient.getRole() != Role.PATIENT) {
+                throw new IllegalArgumentException("Selected user is not a patient");
+            }
+            return patient;
+        }
+        throw new UnauthorizedActionException("Not allowed to create appointments");
     }
 
     @Override
@@ -92,6 +120,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         if (dto.getAppointmentDate() != null)
             appointment.setAppointmentDate(dto.getAppointmentDate());
+        if (dto.getEndTime() != null)
+            appointment.setAppointmentEndDate(dto.getEndTime());
         if (dto.getStatus() != null)
             appointment.setStatus(dto.getStatus());
         if (dto.getReason() != null)
@@ -110,6 +140,46 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointmentRepository.delete(appointment);
     }
 
+    @Override
+    public List<Appointment> findUpcomingForDoctorKeyword(String doctorKeyword, int windowMinutes) {
+        String safeKeyword = doctorKeyword == null ? "" : doctorKeyword.trim();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime limit = now.plusMinutes(Math.max(1, windowMinutes));
+        return appointmentRepository.findUpcomingForDoctorKeyword(
+                safeKeyword,
+                List.of("PENDING", "CONFIRMED"),
+                now,
+                limit
+        );
+    }
+
+    @Override
+    public List<Appointment> searchByKeywords(Long doctorId, String patientKeyword, String reasonKeyword,
+                                              Long currentUserId, String currentRole) {
+        if ("DOCTOR".equals(currentRole)) {
+            doctorId = currentUserId;
+        } else if ("PATIENT".equals(currentRole)) {
+            return appointmentRepository.findByPatientId(currentUserId);
+        }
+
+        return appointmentRepository.searchByKeywords(
+                doctorId,
+                normalizeKeyword(patientKeyword),
+                normalizeKeyword(reasonKeyword)
+        );
+    }
+
+    @Override
+    @Transactional
+    public int expirePastPendingAppointments() {
+        List<Appointment> expired = appointmentRepository.findByStatusAndAppointmentDateBefore("PENDING", LocalDateTime.now());
+        for (Appointment appointment : expired) {
+            appointment.setStatus("EXPIRED");
+        }
+        appointmentRepository.saveAll(expired);
+        return expired.size();
+    }
+
     private void ensureCanAccessAppointment(Appointment appointment, Long currentUserId, String currentRole) {
         if ("ADMIN".equals(currentRole)) {
             return;
@@ -122,4 +192,12 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
         throw new UnauthorizedActionException("You are not allowed to access this appointment");
     }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+        return keyword.trim();
+    }
 }
+

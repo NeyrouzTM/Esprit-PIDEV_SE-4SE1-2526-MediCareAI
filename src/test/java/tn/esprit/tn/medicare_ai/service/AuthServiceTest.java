@@ -89,7 +89,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode("newpass123")).thenReturn("encoded");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UserUpdateRequest req = new UserUpdateRequest("New Name", "new@med.com", "newpass123", Role.DOCTOR, true);
+        UserUpdateRequest req = new UserUpdateRequest("New Name", "new@med.com", "newpass123", Role.DOCTOR, true, null, null, null);
 
         UserResponse response = authService.updateUser(9L, req);
 
@@ -107,7 +107,7 @@ class AuthServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.findByEmail("used@med.com")).thenReturn(Optional.of(other));
 
-        UserUpdateRequest req = new UserUpdateRequest(null, "used@med.com", null, null, null);
+        UserUpdateRequest req = new UserUpdateRequest(null, "used@med.com", null, null, null, null, null, null);
 
         assertThrows(IllegalArgumentException.class, () -> authService.updateUser(1L, req));
     }

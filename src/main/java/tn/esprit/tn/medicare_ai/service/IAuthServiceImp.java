@@ -135,6 +135,15 @@ public class IAuthServiceImp implements IAuthService {
         if (req.enabled() != null) {
             user.setEnabled(req.enabled());
         }
+        if (req.specialtyId() != null) {
+            user.setSpecialtyId(req.specialtyId());
+        }
+        if (req.clinicalDepartment() != null) {
+            user.setClinicalDepartment(req.clinicalDepartment());
+        }
+        if (req.clinicalKeywords() != null) {
+            user.setClinicalKeywords(req.clinicalKeywords());
+        }
 
         return toUserResponse(userRepository.save(user));
     }
@@ -159,7 +168,10 @@ public class IAuthServiceImp implements IAuthService {
                 user.getFullName(),
                 user.getEmail(),
                 user.getRole(),
-                user.isEnabled()
+                user.isEnabled(),
+                user.getSpecialtyId(),
+                user.getClinicalDepartment(),
+                user.getClinicalKeywords()
         );
     }
 }
