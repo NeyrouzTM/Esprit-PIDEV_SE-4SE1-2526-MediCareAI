@@ -5,10 +5,10 @@ import tn.esprit.tn.medicare_ai.entity.MedicalRecord;
 import java.util.List;
 
 public interface MedicalRecordService {
-    MedicalRecord create(MedicalRecordDTO dto);
-    MedicalRecord getById(Long id);
-    MedicalRecord getByPatientId(Long patientId);
-    List<MedicalRecord> getAll();
-    MedicalRecord update(Long id, MedicalRecordDTO dto);
-    void delete(Long id);
+    MedicalRecord create(MedicalRecordDTO dto, Long currentUserId);
+    MedicalRecord getById(Long id, Long currentUserId, String currentRole);
+    MedicalRecord getByPatientId(Long patientId, Long currentUserId, String currentRole);
+    List<MedicalRecord> getAll(String currentRole, Long currentUserId);
+    MedicalRecord update(Long id, MedicalRecordDTO dto, Long currentUserId, String currentRole);
+    void delete(Long id, Long currentUserId, String currentRole);
 }

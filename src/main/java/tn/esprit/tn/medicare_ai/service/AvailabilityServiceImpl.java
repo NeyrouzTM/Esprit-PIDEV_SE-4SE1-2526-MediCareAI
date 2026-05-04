@@ -54,8 +54,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
 
     @Override
     public List<Availability> getAvailableSlots(Long doctorId) {
-        return availabilityRepository
-                .findByDoctorIdAndAvailable(doctorId, true);
+        return availabilityRepository.findByDoctor_IdAndAvailable(doctorId, true);
     }
 
     @Override

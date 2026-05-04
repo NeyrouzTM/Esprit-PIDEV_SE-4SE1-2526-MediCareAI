@@ -48,7 +48,7 @@ class MedicalImageServiceTest {
                 .uploadDate(LocalDate.now())
                 .build();
 
-        MedicalImage result = medicalImageService.create(dto);
+        MedicalImage result = medicalImageService.create(dto, 99L, "ADMIN");
 
         assertEquals("XRAY", result.getImageType());
         assertEquals(7L, result.getMedicalRecord().getId());
@@ -64,10 +64,8 @@ class MedicalImageServiceTest {
                 .build();
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                () -> medicalImageService.create(dto));
+                () -> medicalImageService.create(dto, 99L, "ADMIN"));
         assertEquals("Image URL required", ex.getMessage());
     }
 }
-
-
 

@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -22,8 +23,16 @@ import tn.esprit.tn.medicare_ai.exception.DrugInteractionException;
 import tn.esprit.tn.medicare_ai.exception.InsufficientStockException;
 import tn.esprit.tn.medicare_ai.exception.ResourceNotFoundException;
 import tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException;
+import tn.esprit.tn.medicare_ai.repository.AllergyRepository;
+import tn.esprit.tn.medicare_ai.repository.AppointmentRepository;
+import tn.esprit.tn.medicare_ai.repository.AvailabilityRepository;
+import tn.esprit.tn.medicare_ai.repository.LabResultRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalImageRepository;
+import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
+import tn.esprit.tn.medicare_ai.repository.PrescriptionRepository;
 import tn.esprit.tn.medicare_ai.repository.UserRepository;
 import tn.esprit.tn.medicare_ai.repository.VerificationCodeRepository;
+import tn.esprit.tn.medicare_ai.repository.VisitNoteRepository;
 import tn.esprit.tn.medicare_ai.service.DrugInteractionService;
 import tn.esprit.tn.medicare_ai.service.InventoryService;
 import tn.esprit.tn.medicare_ai.service.MedicineService;
@@ -82,6 +91,30 @@ class OrderControllerTest {
 
     @MockBean
     private VerificationCodeRepository verificationCodeRepository;
+
+    @MockitoBean
+    private AllergyRepository allergyRepository;
+
+    @MockitoBean
+    private AppointmentRepository appointmentRepository;
+
+    @MockitoBean
+    private AvailabilityRepository availabilityRepository;
+
+    @MockitoBean
+    private LabResultRepository labResultRepository;
+
+    @MockitoBean
+    private MedicalImageRepository medicalImageRepository;
+
+    @MockitoBean
+    private MedicalRecordRepository medicalRecordRepository;
+
+    @MockitoBean
+    private PrescriptionRepository prescriptionRepository;
+
+    @MockitoBean
+    private VisitNoteRepository visitNoteRepository;
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {

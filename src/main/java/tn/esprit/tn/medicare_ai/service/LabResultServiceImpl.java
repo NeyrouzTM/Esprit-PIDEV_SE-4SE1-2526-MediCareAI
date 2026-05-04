@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 import tn.esprit.tn.medicare_ai.dto.LabResultDTO;
 import tn.esprit.tn.medicare_ai.entity.LabResult;
 import tn.esprit.tn.medicare_ai.entity.MedicalRecord;
+import tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException;
 import tn.esprit.tn.medicare_ai.repository.LabResultRepository;
 import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
+
 import java.util.List;
 
 @Service
@@ -17,7 +19,7 @@ public class LabResultServiceImpl implements LabResultService {
     private final MedicalRecordRepository medicalRecordRepository;
 
     @Override
-    public LabResult create(LabResultDTO dto) {
+    public LabResult create(LabResultDTO dto, Long currentUserId, String currentRole) {
         if (dto.getMedicalRecordId() == null)
             throw new IllegalArgumentException("Medical record ID required");
         if (dto.getTestName() == null || dto.getTestName().isBlank())
@@ -25,8 +27,9 @@ public class LabResultServiceImpl implements LabResultService {
 
         MedicalRecord record = medicalRecordRepository
                 .findById(dto.getMedicalRecordId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Medical record not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Medical record not found"));
+
+        ensureCanAccessRecord(record, currentUserId, currentRole);
 
         LabResult labResult = LabResult.builder()
                 .medicalRecord(record)
@@ -42,20 +45,24 @@ public class LabResultServiceImpl implements LabResultService {
     }
 
     @Override
-    public LabResult getById(Long id) {
-        return labResultRepository.findById(id)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Lab result not found"));
+    public LabResult getById(Long id, Long currentUserId, String currentRole) {
+        LabResult labResult = labResultRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Lab result not found"));
+        ensureCanAccessRecord(labResult.getMedicalRecord(), currentUserId, currentRole);
+        return labResult;
     }
 
     @Override
-    public List<LabResult> getByMedicalRecordId(Long medicalRecordId) {
+    public List<LabResult> getByMedicalRecordId(Long medicalRecordId, Long currentUserId, String currentRole) {
+        MedicalRecord record = medicalRecordRepository.findById(medicalRecordId)
+                .orElseThrow(() -> new IllegalArgumentException("Medical record not found"));
+        ensureCanAccessRecord(record, currentUserId, currentRole);
         return labResultRepository.findByMedicalRecordId(medicalRecordId);
     }
 
     @Override
-    public LabResult update(Long id, LabResultDTO dto) {
-        LabResult labResult = getById(id);
+    public LabResult update(Long id, LabResultDTO dto, Long currentUserId, String currentRole) {
+        LabResult labResult = getById(id, currentUserId, currentRole);
         if (dto.getTestName() != null)
             labResult.setTestName(dto.getTestName());
         if (dto.getResult() != null)
@@ -72,8 +79,18 @@ public class LabResultServiceImpl implements LabResultService {
     }
 
     @Override
-    public void delete(Long id) {
-        LabResult labResult = getById(id);
+    public void delete(Long id, Long currentUserId, String currentRole) {
+        LabResult labResult = getById(id, currentUserId, currentRole);
         labResultRepository.delete(labResult);
+    }
+
+    private void ensureCanAccessRecord(MedicalRecord record, Long currentUserId, String currentRole) {
+        if ("ADMIN".equals(currentRole) || "DOCTOR".equals(currentRole)) {
+            return;
+        }
+        if ("PATIENT".equals(currentRole) && record.getPatient().getId().equals(currentUserId)) {
+            return;
+        }
+        throw new UnauthorizedActionException("You are not allowed to access this lab result data");
     }
 }

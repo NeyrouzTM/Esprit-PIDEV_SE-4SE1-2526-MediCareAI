@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 import tn.esprit.tn.medicare_ai.dto.AllergyDTO;
 import tn.esprit.tn.medicare_ai.entity.Allergy;
 import tn.esprit.tn.medicare_ai.entity.MedicalRecord;
+import tn.esprit.tn.medicare_ai.exception.UnauthorizedActionException;
 import tn.esprit.tn.medicare_ai.repository.AllergyRepository;
 import tn.esprit.tn.medicare_ai.repository.MedicalRecordRepository;
+
 import java.util.List;
 
 @Service
@@ -17,7 +19,7 @@ public class AllergyServiceImpl implements AllergyService {
     private final MedicalRecordRepository medicalRecordRepository;
 
     @Override
-    public Allergy create(AllergyDTO dto) {
+    public Allergy create(AllergyDTO dto, Long currentUserId, String currentRole) {
         if (dto.getMedicalRecordId() == null)
             throw new IllegalArgumentException("Medical record ID required");
         if (dto.getAllergyName() == null || dto.getAllergyName().isBlank())
@@ -27,8 +29,9 @@ public class AllergyServiceImpl implements AllergyService {
 
         MedicalRecord record = medicalRecordRepository
                 .findById(dto.getMedicalRecordId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Medical record not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Medical record not found"));
+
+        ensureCanAccessRecord(record, currentUserId, currentRole);
 
         Allergy allergy = Allergy.builder()
                 .medicalRecord(record)
@@ -42,20 +45,24 @@ public class AllergyServiceImpl implements AllergyService {
     }
 
     @Override
-    public Allergy getById(Long id) {
-        return allergyRepository.findById(id)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Allergy not found"));
+    public Allergy getById(Long id, Long currentUserId, String currentRole) {
+        Allergy allergy = allergyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Allergy not found"));
+        ensureCanAccessRecord(allergy.getMedicalRecord(), currentUserId, currentRole);
+        return allergy;
     }
 
     @Override
-    public List<Allergy> getByMedicalRecordId(Long medicalRecordId) {
+    public List<Allergy> getByMedicalRecordId(Long medicalRecordId, Long currentUserId, String currentRole) {
+        MedicalRecord record = medicalRecordRepository.findById(medicalRecordId)
+                .orElseThrow(() -> new IllegalArgumentException("Medical record not found"));
+        ensureCanAccessRecord(record, currentUserId, currentRole);
         return allergyRepository.findByMedicalRecordId(medicalRecordId);
     }
 
     @Override
-    public Allergy update(Long id, AllergyDTO dto) {
-        Allergy allergy = getById(id);
+    public Allergy update(Long id, AllergyDTO dto, Long currentUserId, String currentRole) {
+        Allergy allergy = getById(id, currentUserId, currentRole);
         if (dto.getAllergyName() != null)
             allergy.setAllergyName(dto.getAllergyName());
         if (dto.getSeverity() != null)
@@ -68,8 +75,18 @@ public class AllergyServiceImpl implements AllergyService {
     }
 
     @Override
-    public void delete(Long id) {
-        Allergy allergy = getById(id);
+    public void delete(Long id, Long currentUserId, String currentRole) {
+        Allergy allergy = getById(id, currentUserId, currentRole);
         allergyRepository.delete(allergy);
+    }
+
+    private void ensureCanAccessRecord(MedicalRecord record, Long currentUserId, String currentRole) {
+        if ("ADMIN".equals(currentRole) || "DOCTOR".equals(currentRole)) {
+            return;
+        }
+        if ("PATIENT".equals(currentRole) && record.getPatient().getId().equals(currentUserId)) {
+            return;
+        }
+        throw new UnauthorizedActionException("You are not allowed to access this allergy data");
     }
 }

@@ -26,10 +26,20 @@ public class Appointment {
     private User doctor;
 
     private LocalDateTime appointmentDate;
+
+    /** End of the visit window; when null, scheduling logic assumes a default duration from start. */
+    private LocalDateTime appointmentEndDate;
+
     private String status; // PENDING, CONFIRMED, CANCELLED, COMPLETED
     private String reason;
     private String consultationType; // VIDEO, IN_PERSON
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    /** Last automated reminder email sent (optional audit). */
+    private LocalDateTime reminderLastSentAt;
+
+    @Builder.Default
+    private int reminderEmailCount = 0;
 }

@@ -35,6 +35,17 @@ public class User {
     @Builder.Default
     private boolean enabled = true;
 
+    /** Optional link to admin specialty catalog (doctors). */
+    private Long specialtyId;
+
+    /** Free-text department or clinic name (doctors) — used for matching & future ML. */
+    @Column(columnDefinition = "TEXT")
+    private String clinicalDepartment;
+
+    /** Comma- or space-separated tags, e.g. "cardiology, heart failure" (doctors). */
+    @Column(columnDefinition = "TEXT")
+    private String clinicalKeywords;
+
     @Builder.Default
     @ManyToMany
     @JoinTable(
